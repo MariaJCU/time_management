@@ -1,0 +1,270 @@
+/* style for time management app */
+
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    height: 100vh;
+    width: 100vw;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* navbar */
+.navbar-custom {
+	background-color: #c0ded5;
+}
+
+.navbar-custom .navbar-brand,
+.navbar-custom .nav-link {
+    color: #2e4b47;
+}
+
+.navbar-custom .navbar-brand {
+    font-family: 'Courgette', cursive;
+}
+
+.navbar-custom .nav-link {
+    font-family: 'Dosis', sans-serif;
+}
+
+
+/* grid stuff */
+
+.grid {
+    display: grid;
+    padding: 20px;
+    grid-template-columns: 14.28% 14.28% 14.28% 14.28% 14.28% 14.28% 14.28%;
+    height: 70%;
+}
+
+.grid-element {
+    padding: 10px;
+    text-align: left;
+}
+
+.gridtrack {
+    display: grid;
+    padding: 20px;
+    grid-template-columns: 15% 85%;
+    height: 70%;
+}
+
+/* floating stuff */
+.clear {
+    clear:left;
+}
+
+.clearnone{
+    clear:none;
+}
+
+.clearight {
+    clear:right;
+}
+
+.left_div {
+    padding: 5px 20px 20px;
+    width: 25%;
+    float: left;
+}
+
+.left_50_div {
+    padding: 5px 20px 20px;
+    width: 50%;
+    float: left;
+}
+
+.float_left{
+    float: left;
+}
+
+.float_right{
+    float: right;
+}
+
+
+/* padding */
+.inside_div_padding {
+    padding: 3px 5px 3px 0px;
+    height: auto;
+}
+
+.wid20 {
+    padding: 5px 20px 20px;
+    width: 20%;
+}
+
+.wid50 {
+    width: 45%;
+}
+
+.section {
+    padding-bottom: 30px;
+}
+
+.subsection {
+    padding-bottom: 15px;
+}
+
+/* alignment stuff */
+.centering_div {
+    width: 50%;
+    margin: auto;
+    overflow: auto;
+}
+
+.center80 {
+    width: 80%;
+    margin: auto;
+}
+
+.center {
+    margin: auto;
+    text-align: center;
+}
+
+/* shapes */
+.round_box {
+    background-color:  #c0ded5;
+    border-radius: 16px;
+    height: 100%;
+}
+
+.wid100 {
+    width: 100%;
+}
+
+/* table stuff */
+table
+{
+    background-color: transparent;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    width: 100%;
+    color: #2f2f2f;
+}
+
+.roundhover:hover {
+    background-color: #98c5b7;
+    border-radius: 16px;
+}
+
+.roundrows:first-child {
+    border-left-style: solid none;
+    border-top-left-radius: 16px; 
+    border-bottom-left-radius: 16px;
+}
+
+.roundrows:last-child {
+    border-right-style: solid none;
+    border-bottom-right-radius: 16px; 
+    border-top-right-radius: 16px; 
+}
+
+#boderbuttom {
+    border-bottom: 1px none #98c5b7;
+}
+
+.darkergreen {
+    color: #98c5b7;
+}
+
+table th,
+table td
+{
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+th
+{
+    background-color: #eaece5;
+    text-align: left;
+}
+
+#odd_color_table:nth-of-type(odd)
+{
+    background-color: #eaece5;
+}
+
+/* word style */
+.label
+{
+    color: #19574f; 
+    font-family: 'Signika', sans-serif;
+    font-size: 15px;
+    opacity: 0.9;
+}
+
+.task_name
+{
+    color: #2f2f2f;
+    font-family: 'Signika', sans-serif;
+    font-size: 24px;
+}
+
+.task_name:hover {
+    color: #2f2f2f;
+    font-family: 'Signika', sans-serif;
+    font-size: 24px;
+}
+
+h1, h2, h3, h4
+{
+    color: #2f2f2f;
+    font-family: 'Courgette', cursive;
+}
+
+p
+{
+    color: #2f2f2f;
+    font-family: 'Dosis', sans-serif;
+}
+
+/* buttons */
+.buttonsubmit
+{
+    background-color: #2f2f2f;
+    color: white;
+    border: none;
+    text-align: center;
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition-duration: 0.4s;
+    opacity: 0.6;
+    font-family: 'Dosis', sans-serif;
+    font-size: 20px;
+    margin: 3px 5px
+}
+
+.buttonsubmit:hover {
+    opacity: 1;
+    color: white;
+}
+
+.buttonicon{
+    background-color: transparent;
+    color: #2f2f2f;
+    border: none;
+    text-align: center;
+    padding: 2px 5px;
+    border-radius: 3px;
+    transition-duration: 0.4s;
+}
+
+.buttonicon:hover{
+    color: white;
+    background-color: #2f2f2f;
+}
+
+/* Forms */
+
+input, label {
+    font-family: 'Dosis', sans-serif;
+    color: #2f2f2f;
+}

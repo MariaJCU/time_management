@@ -1,0 +1,89 @@
+{% extends "apptime/unreg_layout.html" %}
+
+{% block title %}
+Account
+{% endblock %}
+
+{% load crispy_forms_tags %} 
+
+
+
+{% block body %}
+    <div class='centering_div section'>
+            <h1 class="float_left">Account </h1>
+
+            {% if edit != 1 %}
+                <form method="POST" class="float_left">
+                    {% csrf_token %} 
+                    <input type="hidden" value="t" id="edit_account" name="edit_account" readonly>
+                    <button class="buttonsubmit" type="submit">
+                        <i class="bi bi-pencil-square"></i> Edit
+                    </button>
+                </form>
+
+            {% else %}
+                <a class="buttonsubmit float_left" href="javascript: history.go(-1)" role="button">Back</a>
+
+            {% endif %}
+
+    </div>
+
+    
+    {% if edit == 1 %}
+    <div class='centering_div section'>
+        <h4 class="clear">Settings</h4>
+        <form method="POST">
+            <div class="round_box clear" id="account_info">
+                <div class="centering_div">
+                    {% csrf_token %} 
+                    {{ account_form|crispy }}
+                    <input type="hidden" value="t" id="account_edit" name="account_edit" readonly>
+                </div>
+            </div>
+
+            <button class="buttonsubmit float_right" type="submit">Save Changes</button>
+        </form>
+    </div>
+
+    <div class='centering_div section'>
+        <h4 class="clear">Password</h4>
+        <form method="POST">
+            <div class="round_box clear">
+                <div class="centering_div">
+                    {% csrf_token %} 
+                    {{ PasswordChangeForm|crispy }}
+                    <input type="hidden" value="t" id="password_edit" name="password_edit" readonly>
+                </div>
+            </div>
+
+            <button class="buttonsubmit float_right" type="submit">Change Password</button>
+        </form>
+    </div>
+                
+    {% else %}
+    <div class='centering_div section'>
+        <div class="round_box clear">
+            <div class="centering_div">
+                <p>Username: {{ UserDic.user__username }}</p>
+                <p>Email: {{ UserDic.user__email }}</p>
+                <p>Timezone: {{ UserDic.timezone }}</p>
+                <p>Joined on {{ UserDic.user__date_joined }}</p>
+
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+
+
+    {% for message in messages %}
+    <div class='centering_div section'>
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    </div>
+    
+
+    {% endfor %}
+
+{% endblock %}

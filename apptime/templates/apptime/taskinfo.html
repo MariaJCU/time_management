@@ -1,0 +1,75 @@
+{% extends "apptime/unreg_layout.html" %}
+
+{% block title %}
+Task info
+{% endblock %}
+
+{% load crispy_forms_tags %} 
+
+{% block body %}
+    <div class="centering_div section">
+        <h1>Task: {{ task.task_name }}</h1>
+        <h4>Label: {{ task.label }}</h4>
+
+        <div class="round_box">
+            <p>Due: {{ task.assigned_date }}</p>
+            <p>Created: {{ task.creation_date }}</p>
+            <p>Description: {{ task.description }}</p>
+        </div>
+        
+        <div>
+            <a class="buttonsubmit float_left" href="agenda" role="button">Back</a>
+    
+            <form method="POST" class="float_right">
+                {% csrf_token %}
+                <input type="hidden" name="delete" id="delete" value="t" readonly>
+                <button type="submit" class="buttonsubmit">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16">
+                        <path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/>
+                    </svg>
+                     Delete
+                </button>
+            </form>
+    
+            <a class="buttonsubmit float_right" href="{% url 'edit_task' task.id %}" role="button">
+                <i class="bi bi-pencil-square"></i> Edit
+            </a>
+        </div>
+    </div>
+
+    <div class="centering_div section" >
+        <p>
+            Work Periods:
+        </p>
+        
+        <table>
+            <tr>
+                <th>
+                    Start-Finish
+                </th>
+                <th>
+                    Time (hr)
+                </th>
+            </tr>
+    
+            {% for element in elements %}
+            <tr id="odd_color_table">
+                <td>
+                    {{ element.start }} - {{ element.finish }}
+                </td>
+                <td>
+                    {{ element.total }}
+                </td>
+            </tr>
+            {% endfor %}
+            <tr>
+                <td>Total:</td>
+                {% if task_total %}
+                    <td>{{ task_total }}</td>
+                {% else %}
+                    <td>0.00</td>
+                {% endif %}
+            </tr>
+        </table>
+    </div>
+{% endblock %}

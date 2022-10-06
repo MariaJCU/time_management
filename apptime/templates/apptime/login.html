@@ -1,0 +1,26 @@
+{% extends "apptime/unreg_layout.html" %}
+
+{% block title %}
+Login
+{% endblock %}
+
+{% load crispy_forms_tags %}  
+
+{% block body %}
+<div class="centering_div">
+    <form method="POST">
+        {% csrf_token %} 
+        {{ login_form|crispy }}
+        <button type="submit" class="buttonsubmit">Submit</button>
+    </form>
+
+    {% for message in messages %}
+    
+    <div class="alert alert-success">
+        <a class="close" href="#" data-dismiss="alert">×</a>
+           {{ message }}
+    </div>
+
+    {% endfor %}
+</div>
+{% endblock %}

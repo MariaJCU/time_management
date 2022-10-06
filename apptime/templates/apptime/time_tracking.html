@@ -1,0 +1,266 @@
+{% extends "apptime/unreg_layout.html" %}
+
+{% block title %}
+Time Tracking
+{% endblock %}
+
+{% load crispy_forms_tags %} 
+
+{% block body %}
+<div class="center80">
+
+    <div class="gridtrack">
+
+        <div class="grid-element">
+            <div class="float_left">
+                <div class="clear">
+                    <a class="buttonsubmit" href="log_time" role="button">Log time +</a>
+                    <a class="buttonsubmit" href="start_task" role="button">Start task</a>
+                </div>
+
+                <div class="clear">
+                    <p>Filter By:</p>
+                    <form method="POST">
+                        
+                        {% csrf_token %}
+                        
+                        {% for fiel in time_filter_form %}
+                                {% if fiel.label == 'Completed?' %}
+                                <div class="clear float_left wid100">
+                                    {{ fiel.errors }}
+
+                                    <div class="inside_div_padding float_left">
+                                        <label>{{ fiel.label }}</label>
+                                    </div>
+
+                                    {% for option in fiel %}
+                                    <div class="inside_div_padding float_right">
+                                            {{ option }}
+                                    </div>
+                                    {% endfor %}
+
+                                    {% if field.help_text %}
+                                        <p class="help">{{ field.help_text|safe }}</p>
+                                    {% endif %}
+                                </div>
+                                    
+                                {% elif fiel.label == '' %}
+                                    {% if fiel.name == 'start' %}
+                                    <p>Select a rage</p>
+
+                                    {% else %}
+                                    <div class="inside_div_padding float_left clearnone">
+                                        
+                                    </div>  
+
+                                    {% endif %}
+                                    <div class="inside_div_padding wid50 float_left clearnone">
+                                        {{ fiel.errors }}
+                                        {{ fiel|as_crispy_field }}
+
+                                        {% if field.help_text %}
+                                            <p class="help">{{ field.help_text|safe }}</p>
+                                        {% endif %}
+                                    </div>
+
+                                {% else %}
+                                    <div class="clear float_left wid100">
+                                    {{ fiel.errors }}
+                                    {{ fiel|as_crispy_field }}
+
+                                    {% if field.help_text %}
+                                        <p class="help">{{ field.help_text|safe }}</p>
+                                    {% endif %}
+                                    </div> 
+
+                                {% endif %}
+                        {% endfor %}
+
+                        <input type="hidden" name="track_filter" id="track_filter" value="t" readonly>
+                        <button type="submit" class="buttonsubmit float_right clear">Go</button>
+                    </form>
+                </div>
+
+
+                <div class="clearight">
+                    <p>
+                        File download:
+                    </p>
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ file_form|crispy}}
+                        
+                        <div class="dropdown">
+                            <button class="buttonsubmit float_right dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-download" viewBox="0 0 16 16">
+                                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                                    <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                                </svg>
+                                Download
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                <button type="submit" class="dropdown-item" value="t" name="pdfdownload">PDF (.pdf)</button>
+                                <button type="submit" class="dropdown-item" value="t" name="csvdownload">Comma separated values (.csv)</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-element">
+            <p>
+                History:
+            </p>
+
+            <table clear="clear">
+                <tr>
+                    <th>
+                        <div class="float_left inside_div_padding">
+                            Task
+                        </div>
+                        
+                        <form method="POST" class="float_left inside_div_padding">
+                            {% csrf_token %} 
+                            <input type="hidden" name="order" id="order" value="t" readonly>
+                            {% if order.o_task == 0 %}
+                            <input type="hidden" name="o_task" id="o_task" value="0" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </button>
+                            {% else %}
+                            <input type="hidden" name="o_task" id="o_task" value="1" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                </svg>
+                            </button>
+                            {% endif %}
+                        </form>
+                    </th>
+                    <th>
+                        <div class="float_left inside_div_padding">
+                            Label
+                        </div>
+                        
+                        <form method="POST" class="float_left inside_div_padding">
+                            {% csrf_token %} 
+                            <input type="hidden" name="order" id="order" value="t" readonly>
+                            {% if order.o_label == 0 %}
+                            <input type="hidden" name="o_label" id="o_label" value="0" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </button>
+                            {% else %}
+                            <input type="hidden" name="o_label" id="o_label" value="1" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                </svg>
+                            </button>
+                            {% endif %}
+                        </form>
+                    </th>
+                    <th>
+                        <div class="float_left inside_div_padding">
+                            Start-Finish
+                        </div>
+                        
+                        <form method="POST" class="float_left inside_div_padding">
+                            {% csrf_token %} 
+                            <input type="hidden" name="order" id="order" value="t" readonly>
+                            {% if order.o_start == 0 %}
+                            <input type="hidden" name="o_start" id="o_start" value="0" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </button>
+                            {% else %}
+                            <input type="hidden" name="o_start" id="o_start" value="1" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                </svg>
+                            </button>
+                            {% endif %}
+                        </form>
+                    </th>
+                    <th>
+                        <div class="float_left inside_div_padding">
+                            Time (hr)
+                        </div>
+                        <form method="POST" class="float_left inside_div_padding">
+                            {% csrf_token %} 
+                            <input type="hidden" name="order" id="order" value="t" readonly>
+                            {% if order.o_time == 0 %}
+                            <input type="hidden" name="o_time" id="o_time" value="0" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-down" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </button>
+                            {% else %}
+                            <input type="hidden" name="o_time" id="o_time" value="1" readonly>
+                            <button type="submit" class="buttonicon">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-up" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M7.646 4.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1-.708.708L8 5.707l-5.646 5.647a.5.5 0 0 1-.708-.708l6-6z"/>
+                                </svg>
+                            </button>
+                            {% endif %}
+                        </form>
+                    </th>
+                </tr>
+
+                {% for element in elements %}
+                <tr id="odd_color_table">
+                    <td>
+                        <div id="left_no_padd">
+                            {{ element.task_id__task_name }}
+                        </div>
+                        {% if not element.finish_time %}
+                        <div id="left_no_padd">
+                            <form method="POST">
+                                {% csrf_token %} 
+                                <input type="hidden" name="tracking_sta" id="tracking_sta" value="t" readonly>
+                                <input type="hidden" name="period_id" id="period_id" value="{{ element.id }}" readonly>
+                                <button type="submit" class="buttonicon">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                                        <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ element.task_id__label }}
+                    </td>
+                    <td>
+                        {{ element.start_time|date:format }} - {{ element.finish_time|date:format }}
+                    </td>
+                    <td>
+                        {{ element.total_time }}
+                    </td>
+                </tr>
+                {% endfor %}
+
+                <tr>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th>
+                        {{ total }}
+                    </th>
+                </tr>
+            </table>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

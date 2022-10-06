@@ -1,0 +1,27 @@
+{% extends "apptime/unreg_layout.html" %}
+
+{% block title %}
+Start Task
+{% endblock %}
+
+{% load crispy_forms_tags %}  
+
+{% block body %}
+{% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+<div class="left_div">
+    <h1>Start Task</h1>
+    <form method="POST">
+        {% csrf_token %} 
+        {{ start_form|crispy }}
+        <button type="submit" class="buttonsubmit">Go</button>
+        <a class="buttonsubmit" href="time_tracking" role="button">Back</a>
+    </form>
+</div>
+{% endblock %}

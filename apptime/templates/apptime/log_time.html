@@ -1,0 +1,19 @@
+{% extends "apptime/unreg_layout.html" %}
+
+{% block title %}
+Log Task
+{% endblock %}
+
+{% load crispy_forms_tags %}  
+
+{% block body %}
+<div class="left_div">
+    <h1>Logging Previous Time</h1>
+    <form method="POST">
+        {% csrf_token %} 
+        {{ log_form|crispy }}
+        <button type="submit" class="buttonsubmit">Go</button>
+        <a class="buttonsubmit" href="time_tracking" role="button">Back</a>
+    </form>
+</div>
+{% endblock %}

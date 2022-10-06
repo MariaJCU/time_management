@@ -1,0 +1,19 @@
+{% extends "apptime/unreg_layout.html" %}
+
+{% block title %}
+Task info
+{% endblock %}
+
+{% load crispy_forms_tags %} 
+
+{% block body %}
+    <div class="left_50_div">
+        <h1>Create Task</h1>
+        <form method="POST">
+            {% csrf_token %} 
+            {{ task_full_form|crispy }}
+            <button type="submit" class="buttonsubmit">Go</button>
+            <a class="buttonsubmit" href="javascript: history.go(-1)" role="button">Back</a>
+        </form>
+    </div>
+{% endblock %}
