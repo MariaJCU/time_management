@@ -1,37 +1,3 @@
-# Working on the account edit. Add a change password buttom
-
-# Working on filtering functionality for time-tracking. Ask the user for a timezone or similar because right now the hours are not matching my actual time.
-    # for now my app is displaying time in UTC time, I need to enable time zones
-    # default vs current timezones: https://docs.djangoproject.com/en/4.0/topics/i18n/timezones/#default-time-zone-and-current-time-zone
-    # ex code for selecting a time zone from user: https://docs.djangoproject.com/en/4.0/topics/i18n/timezones/#selecting-the-current-time-zone
-
-    # steps:
-        # extend the users model to contain timezones for each user using one-to-one model (DONE)
-        # add a time zone to my user (DONE)
-        # enable time zones in settings.py (DONE)
-        # test (DONE)
-
-# Working on filtering functionality for time-tracking. Adding a filter for the following:
-    #Select a time period and see the tasks that were worked on during that period.
-    #Select a task name, label, assigned date, or creation date and see the respective tracked tasks.
-
-    # steps:
-        # add the respective fiels to the form that is displayed in the tracking fuction (DONE)
-        # I need to add hidden fields with the filters (DONE)
-        # I need to create a sql query with the user entered filters.
-        # I need to display the filters
-
-
-# REMINDERS:
-    # add error message under agenda, request.POST.get('tracking_sta') == 't' if the incomplete period was not found otherwise it errs.
-    # When a user starts or stops a timer, the page must be the same.
-    # the "start task" form for time traking returns an error if it finds multiple tasks with the same name.
-    # the edit buttom does not accept empty spaces for the assigned tasks. It also tries to update all of the fields. How to know when it is necesary to update and when not?
-    # website errs  when I used the nav bar to go to the tracking path from the edit_task screen
-    # if a query fails it explodes
-    # The fuction create_incomplete_period could end up with multiple tasks with the same name and label. This could create errors in the time tracking
-    # login fields are casesensitive
-
 from datetime import datetime, timedelta
 import re
 import pytz
@@ -42,7 +8,12 @@ import io
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import Table, TableStyle, Paragraph
+import math
+from reportlab.platypus import BaseDocTemplate
+from reportlab.lib.styles import getSampleStyleSheet
+
 
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse
 from django.shortcuts import redirect, render
@@ -452,7 +423,9 @@ def time_tracking(request):
             BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
             # Name file
-            filename = request.POST.get('filename')
+            filename = request.POST.get('filename')   
+            if not filename:
+                filename = datetime.now().strftime("report_%Y%m%d")
             filename = filename + '.csv'
 
             # Define the full file path
@@ -490,11 +463,29 @@ def time_tracking(request):
             format = '%Y-%m-%d %-I:%M %p'
             response = HttpResponse(content_type='application/pdf')
 
+            filename = request.POST.get('filename')   
+            if not filename:
+                filename = datetime.now().strftime("report_%Y%m%d")
+            filename = filename + '.pdf'
+            stylesheet=getSampleStyleSheet()
+
             # Create the PDF object with a letter size
             p = canvas.Canvas(response, pagesize=letter)
 
+            # bolding headings
+            P0 = Paragraph('''<b>Task</b>''',
+                            stylesheet["BodyText"])
+            P1 = Paragraph('''<b>Label</b>''',
+                            stylesheet["BodyText"])
+            P2 = Paragraph('''<b>Start</b>''',
+                            stylesheet["BodyText"])
+            P3 = Paragraph('''<b>Finish</b>''',
+                            stylesheet["BodyText"])
+            P4 = Paragraph('''<b>Time</b>''',
+                            stylesheet["BodyText"])
+
             data = [
-                ["Task", "Label", "Start", "Finish", "Time(hr)"]
+                [P0, P1, P2, P3, P4]
             ]
 
             datarow = []
@@ -515,58 +506,45 @@ def time_tracking(request):
             # get the total number of hrs
             total = DICFILTER.aggregate(total=Sum('total_time'))
 
-            datarow = ['','','','',total['total']]
+            # bold total
+            P5 = Paragraph(f'''<b>{total['total']}</b>''',
+                stylesheet["BodyText"])
+
+            # add the last line to the **char
+            datarow = ['','','','',P5]
             data.append(datarow)
             datarow = []           
 
-            # create table obj
-            f = Table(data, repeatRows=1)
-            f.setStyle(TableStyle([
-                        ('INNERGRID', (0,0), (-1,-1), 0.25, colors.black),
-                        ('BOX', (0,0), (-1,-1), 0.25, colors.black),
+            # get the number of rows
+            nrows = len(data)
+            rpp = 40
+
+            # divide the number rows by the number of rows per page.
+            npages = math.ceil(nrows / rpp)
+            
+            # create each page of the PDF
+            for i in range(npages):
+                # create table obj
+                f = Table(data[0+(rpp*i):rpp+(rpp*i)], [(width-(inch))*(141/385), (width-(inch))/7,(width-(inch))/5,(width-(inch))/5,(width-(inch))/11])
+                f.setStyle(TableStyle([
+                        ('ROWBACKGROUNDS', (0, 0), (-1, -1), (0xeaece5, None)),
+                        ('TEXTCOLOR',(0,0),(-1,-1), (0x2f2f2f))
                         ]))
 
-            w, h = f.wrapOn(p, width, height)
+                w, h = f.wrapOn(p, width, height)
 
-            print(w,h)
-            print(width,height)
+                # if the table is bigger than the paper size, raise an error
+                if w >= width:
+                    raise ValueError
 
-            # if the table is bigger than the paper size, raise an error
-            if w >= width:
-                raise ValueError
+                f.drawOn(p, inch/2, height-h-inch/2)
+                
+                # Close page
+                p.showPage()
 
-            dic = f.split(width, height)
-
-            print(dic)
-
-            f.drawOn(p, 50, height-h-20)
-            
-
-            # Close the PDF object
-            p.showPage()
             p.save()
 
             return response
-
-            # Create a file-like buffer to receive PDF data.
-            buffer = io.BytesIO()
-
-            # Create the PDF object, using the buffer as its "file."
-            p = canvas.Canvas(buffer)
-
-            # Draw things on the PDF. Here's where the PDF generation happens.
-            # See the ReportLab documentation for the full list of functionality.
-            p.drawString(100, 100, "Hello world.")
-
-            # Close the PDF object cleanly, and we're done.
-            p.showPage()
-            p.save()
-
-            # FileResponse sets the Content-Disposition header so that browsers
-            # present the option to save the file.
-            buffer.seek(0)
-            return FileResponse(buffer, as_attachment=True, filename='hello.pdf')
-
 
     userobj = User.objects.get(id=request.user.id)
     elements = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj).order_by('-start_time').values('id', 'task_id__task_name', 'task_id__label', 'start_time', 'finish_time', 'total_time', 'task_id__tracking_sta')
