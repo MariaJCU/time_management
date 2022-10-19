@@ -15,7 +15,7 @@ from reportlab.platypus import BaseDocTemplate
 from reportlab.lib.styles import getSampleStyleSheet
 
 
-from django.http import HttpResponse, HttpResponseRedirect, FileResponse
+from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.models import User
 from apptime.models import tasks, work_periods, profile
@@ -558,6 +558,28 @@ def time_tracking(request):
         'format':DATETIMEFORMAT,
         "total":total['total']
         })
+
+
+def task_autocomplete(request):
+    if request.GET.get('q'):
+        q = request.GET['q']
+        data = tasks.objects.filter(user_id__id=request.user.id, task_name__contains=q).values_list('task_name',flat=True).distinct()[:5]
+        json = list(data)
+
+        return JsonResponse(json, safe=False)
+        
+    return HttpResponse("Incorrect request")
+
+
+def label_autocomplete(request):
+    if request.GET.get('l'):
+        q = request.GET.get('l')
+        data = tasks.objects.filter(user_id__id=request.user.id, label__contains=q).values_list('label',flat=True).distinct()[:5]
+
+        json = list(data)
+
+        return JsonResponse(json, safe=False)
+    return HttpResponse("Incorrect request")
 
 
 @login_required(login_url='login_pg')

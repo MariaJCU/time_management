@@ -73,11 +73,17 @@ class task_full_form(forms.Form):
 
 
 class time_filter_form(forms.Form):
-	
-
 	time = forms.DateTimeField(label='Time', input_formats=['%Y-%m-%d %H:%M'], widget=datetimeinput, required=False, )
-	task = forms.CharField(label='Task', max_length=100, required=False)
-	label = forms.CharField(label='Label', max_length=100, required=False)
+	task = forms.CharField(label='Task', max_length=100, required=False, widget=forms.TextInput(
+        attrs={
+            'class': 'basicAutoComplete1',
+			'autocomplete':"off"
+        }))
+	label = forms.CharField(label='Label', max_length=100, required=False, widget=forms.TextInput(
+		attrs={
+            'class': 'basicAutoComplete',
+			'autocomplete':"off"
+        }))
 	assigned = forms.DateTimeField(label='Due Date', input_formats=['%Y-%m-%d'], required=False, widget=dateinput)
 	created = forms.DateTimeField(label='Creation', input_formats=['%Y-%m-%d %H:%M'], widget=datetimeinput, required=False)
 	start = forms.DateTimeField(label='', input_formats=['%Y-%m-%d %H:%M'], widget=datetimeinput, required=False)

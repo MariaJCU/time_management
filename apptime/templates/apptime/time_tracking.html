@@ -5,8 +5,37 @@ Time Tracking
 {% endblock %}
 
 {% load crispy_forms_tags %} 
+{% load widget_tweaks %}
 
 {% block body %}
+<script>
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementsByName("label")[0].addEventListener('input', function() {
+            $('.basicAutoComplete').autoComplete({
+                    preventEnter: true,
+                    minLength: 1,
+                    resolverSettings: {
+                        url: 'label_autocomplete/',
+                        queryKey: 'l'
+                    }
+            });
+        });
+
+        document.getElementsByName("task")[0].addEventListener('input', function() {
+            $('.basicAutoComplete1').autoComplete({
+                    preventEnter: true,
+                    minLength: 1,
+                    resolverSettings: {
+                        url: 'task_autocomplete/',
+                        queryKey: 'q'
+                    }
+            });
+        });
+    });
+
+</script>
+
 <div class="center80">
 
     <div class="gridtrack">
@@ -64,14 +93,20 @@ Time Tracking
                                     </div>
 
                                 {% else %}
-                                    <div class="clear float_left wid100">
-                                    {{ fiel.errors }}
-                                    {{ fiel|as_crispy_field }}
 
-                                    {% if field.help_text %}
-                                        <p class="help">{{ field.help_text|safe }}</p>
+                                    {% if field.name == "task" or field.name == "label" %}
+                                        {% render_field field class="basicAutoComplete form-control" %}
+
+                                    {% else %}
+                                        <div class="clear float_left wid100">
+                                            {{ fiel.errors }}
+                                            {{ fiel|as_crispy_field }}
+        
+                                            {% if field.help_text %}
+                                                <p class="help">{{ field.help_text|safe }}</p>
+                                            {% endif %}
+                                        </div> 
                                     {% endif %}
-                                    </div> 
 
                                 {% endif %}
                         {% endfor %}
