@@ -13,6 +13,7 @@ from reportlab.platypus import Table, TableStyle, Paragraph
 import math
 from reportlab.platypus import BaseDocTemplate
 from reportlab.lib.styles import getSampleStyleSheet
+import json
 
 
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
@@ -168,33 +169,29 @@ def account(request):
 
 @login_required(login_url='login_pg')
 def create_task(request, date):
-    if request.method == "POST":
-        # create the desired task
-        form = task_full_form(request.POST)
-        task = request.POST["task"]
-        label = request.POST["label"]
-        assigned = request.POST["assigned"]
-        if not assigned:
-            assigned = date
+    # create the desired task
+    task = request.POST["task"]
+    label = request.POST["label"]
+    assigned = request.POST["assigned"]
+    if not assigned:
+        assigned = date
 
-        description = request.POST["description"]
+    description = request.POST["description"]
 
-        # get user's object
-        userobj = User.objects.get(id=request.user.id)
+    # get user's object
+    userobj = User.objects.get(id=request.user.id)
 
-        # Create task / insert it in the tasks table
-        task_to_insert = tasks(user_id = userobj, task_name = task, label = label, assigned_date = assigned, description = description)
-        task_to_insert.save()
+    # Create task / insert it in the tasks table
+    task_to_insert = tasks(user_id = userobj, task_name = task, label = label, assigned_date = assigned, description = description)
+    task_to_insert.save()
 
-        return HttpResponseRedirect(reverse('agenda'))
-
-    form = task_full_form()
-    return render(request, template_name="apptime/taskform.html", context={"task_full_form":form})
-
+    return 0
 
 
 @login_required(login_url='login_pg')
 def agenda(request):
+    task_form = task_full_form()
+
     if request.method == "POST":
             if request.POST.get('agendaback') == 't':
                 now = request.POST["sunday"]
@@ -217,7 +214,7 @@ def agenda(request):
                 tasklist = find_tasks_for_week(request.user.id, datesdic, None)
 
                 # Display the tasks
-                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, 'format':DATEFORMAT})
+                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
 
             elif request.POST.get('agendaforward') == 't':
                 now = request.POST["sunday"]
@@ -234,7 +231,7 @@ def agenda(request):
                 tasklist = find_tasks_for_week(request.user.id, datesdic, None)
 
                 # Display the tasks
-                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, 'format':DATEFORMAT})
+                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
 
             elif request.POST.get('date_entered') == 't':
                 form = agenda_form(request.POST)
@@ -253,7 +250,18 @@ def agenda(request):
                 # Get the tasks for the week
                 tasklist = find_tasks_for_week(request.user.id, datesdic, None)
 
-                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, 'format':DATEFORMAT})
+                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
+
+            elif request.POST.get('add_date'):
+                add_date = request.POST.get('add_date')
+
+                # add_date has the following format before converting: "Oct. 16, 2022"
+                # conver add_date to datetime
+                format = "%b. %d, %Y" 
+                add_date = datetime.strptime(add_date, format)
+
+                create_task(request, add_date)
+
 
             elif request.POST.get('tracking_sta') == 't':
                 task_id = request.POST.get('task_id')
@@ -324,6 +332,7 @@ def agenda(request):
         "datesdic":datesdic, 
         "tasklist":tasklist, 
         "agenda_form":form,
+        "task_full_form":task_form,
         'format':DATEFORMAT
         })
 
@@ -740,7 +749,7 @@ def calc_week(now, format):
     datesdic = {}
 
     # fill dictionary
-    for i in ['sunday', 'monday', 'tuesday', 'wednesday', 'thrusday', 'friday', 'saturday']:
+    for i in ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']:
         datesdic[i] = now.date()
         if format:
             datesdic[i] = datesdic[i].strftime(format)

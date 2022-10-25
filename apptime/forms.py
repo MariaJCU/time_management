@@ -66,7 +66,7 @@ class agenda_form(forms.Form):
 
 
 class task_full_form(forms.Form):
-	task = forms.CharField(label='Task', max_length=100)
+	task = forms.CharField(label='Task', max_length=100, required=False)
 	label = forms.CharField(label='Label', max_length=100, required=False)
 	assigned = forms.DateTimeField(label='Due', input_formats=['%Y-%m-%d'], widget=dateinput, required=False)
 	description = forms.CharField(widget=forms.Textarea, required=False)

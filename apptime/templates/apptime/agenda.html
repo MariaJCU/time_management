@@ -7,6 +7,46 @@ Agenda
 {% load crispy_forms_tags %} 
 
 {% block body %}
+<script>
+ 
+    document.addEventListener("DOMContentLoaded", function() {
+        
+        const days = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+        // create a loop through the list of days of the week
+        for (let i=0, len = days.length; i<len; i++) {
+
+            // initialize popovers with id popover-day when the user hovers over the add button
+            let pop_id = "popover-" + days[i]
+            let content_id = "#popover-content-" + days[i]
+            let head_id = "#popover-head-" + days[i]
+
+            document.getElementById(pop_id).addEventListener("mouseover", function() {
+                $("#" + pop_id).popover({ 
+                    html : true,
+                    sanitize: false,
+                    container: 'body',
+                    offset: 200,
+
+                    title: function() {
+                        return $(head_id).html();
+                    },
+
+                    content: function() {
+                        return $(content_id).html();
+                    }
+
+                });
+                
+            });
+
+        }
+
+    });
+
+</script>
+
+
 {% if messages %}
 <ul class="messages">
     {% for message in messages %}
@@ -53,7 +93,7 @@ Agenda
 </div>
 
 <div class="grid clear">
-    {% for date in datesdic.values %}
+    {% for day, date in datesdic.items %}
         <div class="grid-element">
             <h4 class="center">
                 {{ date|date:format }}
@@ -132,17 +172,31 @@ Agenda
                                 </svg>
                             </td>
                         </tr>
+                            
                         {% endif %}
                     {% endfor %}
                     <tr>
                         <td class="roundrows">
-                            <form method="POST">
-                                {% csrf_token %}
-                                <input type="hidden" name="add" id="add" value="t" readonly>
-                                <a class="buttonicon" href="{% url 'create_task' date %}" role="button">
-                                    <i class="bi bi-plus-lg"></i>
-                                </a>
-                            </form>
+                    
+                            <button id="popover-{{ day }}" type="button" class="btn btn-lg buttonicon" data-toggle="popover">
+                                <i class="bi bi-plus-lg"></i>
+                            </button>
+
+                            <div id="popover-head-{{ day }}" class="d-none">
+                                Create Task
+                            </div>
+
+                            <div id="popover-content-{{ day }}" class="d-none">
+                                <form method="POST">
+                                    {% csrf_token %}
+
+                                    <input type="hidden" name="add_date" id="add_date" value="{{ date }}" readonly>
+                                    {{ task_full_form|crispy }}
+                                    <button type="submit" class="buttonsubmit float_right">Create Task</button>
+
+                                </form>
+                            </div>
+
                         </td>
                     </tr>
                 </table>
