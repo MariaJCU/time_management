@@ -7,6 +7,7 @@ Task info
 {% load crispy_forms_tags %} 
 
 {% block body %}
+    {% if edit != 1 %}
     <div class="centering_div section">
         <h1>Task: {{ task.task_name }}</h1>
         <h4>Label: {{ task.label }}</h4>
@@ -37,7 +38,86 @@ Task info
         </div>
     </div>
 
+    {% else %}
+    <div class="centering_div section">
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="container-fluid">
+            {% for field in task_full_form %}
+                {% if field.name == 'task' %}
+                    <div class="row">
+                        <div class="col-md-2">
+                            <label for="id_task">
+                                <h1>Task:</h1>
+                            </label>
+                        </div>
+                    
+                        <div class="col">
+                            {{ field.errors }}
+                            {{ field|as_crispy_field }}
+
+                            {% if field.help_text %}
+                                <p class="help">{{ field.help_text|safe }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                
+                {% elif field.name == 'label' %}
+                    <div class="clear">
+                        <div class="row">
+                            <div class="col-md-2">
+                                <h4>Label:</h4>
+                            </div>
+
+                            <div class="col">
+                                {{ field.errors }}
+                                {{ field|as_crispy_field }}
+
+                                {% if field.help_text %}
+                                    <p class="help">{{ field.help_text|safe }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                {% elif field.label == 'Due' %}
+                    <div class="round_box clear">
+                        <div class="center80 inside_div_padding">
+                        {{ fiel.errors }}
+                        {{ field|as_crispy_field }}
+
+                        {% if field.help_text %}
+                            <p class="help">{{ field.help_text|safe }}</p>
+                        {% endif %}
+
+                {% elif field.label == 'Description' %}
+                        {{ field.errors }}
+                        {{ field|as_crispy_field }}
+
+                        {% if field.help_text %}
+                            <p class="help">{{ field.help_text|safe }}</p>
+                        {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+
+            {% endfor %}
+        
+        <div>
+            <a class="buttonsubmit float_left" href="agenda" role="button">Back</a>
+    
+            <button class="buttonsubmit float_right" type="submit">
+                <i class="bi bi-pencil-square"></i> Save
+            </button>
+        </div>
+        </form>
+    </div>
+    </div>
+    {% endif %}
+
     <div class="centering_div section" >
+        <div class="container-fluid">
         <p>
             Work Periods:
         </p>
@@ -71,5 +151,6 @@ Task info
                 {% endif %}
             </tr>
         </table>
+        </div>
     </div>
 {% endblock %}

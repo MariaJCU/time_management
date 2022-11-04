@@ -223,7 +223,7 @@ h1, h2, h3, h4
 p
 {
     color: #2f2f2f;
-    font-family: 'Dosis', sans-serif;
+    font-family: 'Signika', sans-serif;
 }
 
 /* buttons */
@@ -265,6 +265,6 @@ p
 /* Forms */
 
 input, label {
-    font-family: 'Dosis', sans-serif;
+    font-family: 'Signika', sans-serif;
     color: #2f2f2f;
 }

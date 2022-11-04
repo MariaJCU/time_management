@@ -1,4 +1,6 @@
 from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
 from apptime.models import profile
@@ -70,6 +72,12 @@ class task_full_form(forms.Form):
 	label = forms.CharField(label='Label', max_length=100, required=False)
 	assigned = forms.DateTimeField(label='Due', input_formats=['%Y-%m-%d'], widget=dateinput, required=False)
 	description = forms.CharField(widget=forms.Textarea, required=False)
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.helper = FormHelper()
+		self.fields['task'].label = False
+		self.fields['label'].label = False
 
 
 class time_filter_form(forms.Form):

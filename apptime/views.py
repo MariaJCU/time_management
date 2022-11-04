@@ -191,7 +191,6 @@ def create_task(request, date):
 @login_required(login_url='login_pg')
 def agenda(request):
     task_form = task_full_form()
-
     if request.method == "POST":
             if request.POST.get('agendaback') == 't':
                 now = request.POST["sunday"]
@@ -666,13 +665,12 @@ def log_time(request):
 
 @login_required(login_url='login_pg')
 def edit_task(request, task_id):
-    storage = None
-
     if request.method == "POST":
         # Get form
         form = task_full_form(request.POST)
 
-        if form.is_valid():
+        if not form.is_valid():
+            
             task_name = form.cleaned_data.get("task")
             label = form.cleaned_data.get("label")
             assigned_date = form.cleaned_data.get("assigned")
@@ -686,17 +684,40 @@ def edit_task(request, task_id):
             
             # Update task
             tasks.objects.filter(id=task_id, user_id=request.user).update(**filter_kwargs)
-            
             messages.success(request, "The task was updated.")
-            storage = get_messages(request)
             return HttpResponseRedirect(reverse('agenda'))
 
         messages.error(request, "Could not update task")
-        storage = get_messages(request)
         return HttpResponseRedirect(request.path)
-    else:
-        form = task_full_form()
-        return render(request, template_name="apptime/taskform.html", context={"task_full_form":form, "messages":storage})
+    
+    #get form
+    """
+    print(user_query[0]['timezone'])
+    form = account_form(initial={'username': user_query[0]['user__username'], 'email':user_query[0]['user__email'], 'timezone':user_query[0]['timezone']})
+    formpass = PasswordChangeForm(user=request.user, data=request.POST)
+    return render(request, 'apptime/account.html', context={'timezones': TIMEZONES,'account_form':form, 'edit':edit, 'PasswordChangeForm':formpass})
+    """
+    
+    userobj = User.objects.get(id=request.user.id)
+    taskquery = tasks.objects.get(id=task_id, user_id=userobj)
+    total = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj).aggregate(total=Sum('total_time'))
+    elements = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj, task_id=task_id)
+    task = tasks.objects.get(id=task_id, user_id=request.user)
+
+    form = task_full_form(initial={
+        'task': taskquery.task_name, 
+        'label': taskquery.label, 
+        'assigned': taskquery.assigned_date,
+        'description':taskquery.description
+        })
+
+    return render(request, "apptime/taskinfo.html", {
+    "task_full_form":form,
+    "task_total": total['total'],
+    "elements": elements,
+    "edit": 1,
+    "task":task
+    })
 
 
 @login_required(login_url='login_pg')
@@ -709,12 +730,9 @@ def taskinfo(request, task_id):
 
             # redirect to agenda page
             return HttpResponseRedirect("agenda")
-        elif request.POST.get('edit') == 't':
-            # redirect to edit task path
-            return HttpResponseRedirect("agenda")
 
     # Get task object
-    task = tasks.objects.get(id=task_id)
+    task = tasks.objects.get(id=task_id, user_id=request.user)
 
     # Get the total time for the task
     with connection.cursor() as cursor:
