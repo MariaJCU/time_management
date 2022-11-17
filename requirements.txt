@@ -1,0 +1,14 @@
+asgiref==3.5.2
+Django<4.1
+django-crispy-forms==1.14.0
+django-widget-tweaks==1.4.12
+Pillow==9.2.0
+psycopg2-binary==2.9.4
+python-dateutil==2.8.2
+python-decouple==3.6
+python-gnupg==0.5.0
+pytz==2019.3
+reportlab==3.5.34
+six==1.16.0
+sqlparse==0.4.3
+

@@ -46,14 +46,27 @@ Agenda
 
 </script>
 
+{% if messages %}
+    {% for message in messages %}
+    {{ message.tags }}
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endfor %}
+{% endif %}
 
+<!-- 
 {% if messages %}
 <ul class="messages">
     {% for message in messages %}
     <li {% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
     {% endfor %}
 </ul>
-{% endif %}
+{% endif %} -->
+
 
 
 <div class="left_div">

@@ -7,6 +7,20 @@ Task info
 {% load crispy_forms_tags %} 
 
 {% block body %}
+
+{% if messages %}
+    <div class="centering_div section">
+        {% for message in messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
     {% if edit != 1 %}
     <div class="centering_div section">
         <h1>Task: {{ task.task_name }}</h1>
@@ -19,7 +33,7 @@ Task info
         </div>
         
         <div>
-            <a class="buttonsubmit float_left" href="agenda" role="button">Back</a>
+            <a class="buttonsubmit float_left" href="{% url 'agenda' %}" role="button">Back</a>
     
             <form method="POST" class="float_right">
                 {% csrf_token %}
@@ -105,7 +119,7 @@ Task info
             {% endfor %}
         
         <div>
-            <a class="buttonsubmit float_left" href="agenda" role="button">Back</a>
+            <a class="buttonsubmit float_left" href="{% url 'agenda' %}" role="button">Back</a>
     
             <button class="buttonsubmit float_right" type="submit">
                 <i class="bi bi-pencil-square"></i> Save

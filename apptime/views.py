@@ -669,8 +669,7 @@ def edit_task(request, task_id):
         # Get form
         form = task_full_form(request.POST)
 
-        if not form.is_valid():
-            
+        if form.is_valid():
             task_name = form.cleaned_data.get("task")
             label = form.cleaned_data.get("label")
             assigned_date = form.cleaned_data.get("assigned")
@@ -684,8 +683,8 @@ def edit_task(request, task_id):
             
             # Update task
             tasks.objects.filter(id=task_id, user_id=request.user).update(**filter_kwargs)
-            messages.success(request, "The task was updated.")
-            return HttpResponseRedirect(reverse('agenda'))
+            messages.success(request, "The task was updated")
+            return HttpResponseRedirect(reverse('taskinfo', args=[task_id]))
 
         messages.error(request, "Could not update task")
         return HttpResponseRedirect(request.path)

@@ -21,7 +21,7 @@ Start Task
         {% csrf_token %} 
         {{ start_form|crispy }}
         <button type="submit" class="buttonsubmit">Go</button>
-        <a class="buttonsubmit" href="time_tracking" role="button">Back</a>
+        <a class="buttonsubmit" href="{% url 'time_tracking' %}" role="button">Back</a>
     </form>
 </div>
 {% endblock %}
