@@ -32,9 +32,74 @@ Time Tracking
                     }
             });
         });
+
+
+        $("#popover-log").popover({ 
+            html : true,
+            sanitize: false,
+            container: 'body',
+            offset: 200,
+
+            title: function() {
+                return $("#popover-head-log").html();
+            },
+
+            content: function() {
+                return $("#popover-content-log").html();
+            }
+
+        });
+
+        $("#popover-start").popover({ 
+            html : true,
+            sanitize: false,
+            container: 'body',
+            offset: 200,
+
+            title: function() {
+                return $("#popover-head-start").html();
+            },
+
+            content: function() {
+                return $("#popover-content-start").html();
+            }
+
+        });
+
+        /* I need to change the class of an specfic row once a row is added. It must blink three times, then desapear */
+        /* 1. identify the row */
+            /*  */
+        /* 2. repeat 3 times (use an setInterval) */
+            /* 3. if class not pressent */
+                /* 4. add class */
+            /* 5. if class present */
+                /* 6. take away class */
     });
 
 </script>
+
+{% if messages %}
+    <div class="px-3">
+        {% for message in messages %}
+            {% if message.tags == "success" %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            {% else %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
 
 <div class="center80">
 
@@ -43,12 +108,45 @@ Time Tracking
         <div class="grid-element">
             <div class="float_left">
                 <div class="clear">
-                    <a class="buttonsubmit" href="{% url 'log_time' %}" role="button">Log time +</a>
-                    <a class="buttonsubmit" href="{% url 'start_task' %}" role="button">Start task</a>
+                    <div class="subsection">
+                        <button id="popover-log" type="button" class="btn btn-primary btn-lg btn-block" data-toggle="popover">
+                            Log time <i class="bi bi-plus-lg"></i>
+                        </button>
+
+                        <button id="popover-start" type="button" class="btn btn-primary btn-lg btn-block" data-toggle="popover">
+                            Start task 
+                        </button>
+
+                        <!-- popovers contents -->
+                        <div id="popover-head-log" class="d-none">
+                            Log Time
+                        </div>
+                        <div id="popover-content-log" class="d-none">
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="log_time" id="log_time" value="t" readonly>
+                                {{ log_form|crispy }}
+                                <button type="submit" class="buttonsubmit float_right">Go</button>
+
+                            </form>
+                        </div>
+
+                        <div id="popover-head-start" class="d-none">
+                            Start task
+                        </div>
+                        <div id="popover-content-start" class="d-none">
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="start_form" id="start_form" value="t" readonly>
+                                {{ start_form|crispy }}
+                                <button type="submit" class="buttonsubmit float_right">Go</button>
+
+                            </form>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="clear">
-                    <p>Filter By:</p>
                     <form method="POST">
                         
                         {% csrf_token %}
@@ -144,10 +242,6 @@ Time Tracking
         </div>
 
         <div class="grid-element">
-            <p>
-                History:
-            </p>
-
             <table clear="clear">
                 <tr>
                     <th>
@@ -252,7 +346,7 @@ Time Tracking
                 </tr>
 
                 {% for element in elements %}
-                <tr id="odd_color_table">
+                <tr id="odd_color_table" {% if shine_id == element.id %} class="a_blinking_back" {% endif %}>
                     <td>
                         <div id="left_no_padd">
                             {{ element.task_id__task_name }}

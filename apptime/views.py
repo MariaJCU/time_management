@@ -161,7 +161,7 @@ def account(request):
         #get form
         print(user_query[0]['timezone'])
         form = account_form(initial={'username': user_query[0]['user__username'], 'email':user_query[0]['user__email'], 'timezone':user_query[0]['timezone']})
-        formpass = PasswordChangeForm(user=request.user, data=request.POST)
+        formpass = PasswordChangeForm(user=request.user)
         return render(request, 'apptime/account.html', context={'timezones': TIMEZONES,'account_form':form, 'edit':edit, 'PasswordChangeForm':formpass})
 
     return render(request, 'apptime/account.html', context={'timezones': TIMEZONES, 'UserDic':user_query[0]})
@@ -252,14 +252,22 @@ def agenda(request):
                 return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
 
             elif request.POST.get('add_date'):
-                add_date = request.POST.get('add_date')
+                task_form = task_full_form(request.POST)
 
-                # add_date has the following format before converting: "Oct. 16, 2022"
-                # conver add_date to datetime
-                format = "%b. %d, %Y" 
-                add_date = datetime.strptime(add_date, format)
+                if task_form.is_valid():
+                    add_date = request.POST["add_date"]
 
-                create_task(request, add_date)
+                    # add_date has the following format before converting: "Oct. 16, 2022"
+                    # convert add_date to datetime
+                    format = "%b. %d, %Y" 
+                    add_date = datetime.strptime(add_date, format)
+
+                    if create_task(request, add_date) == 0:
+                        messages.success(request, "The task was created")
+                    else:
+                        messages.error(request, "Could not create task")
+                else:
+                    messages.error(request, "Could not create task. Invalid form.")
 
 
             elif request.POST.get('tracking_sta') == 't':
@@ -346,6 +354,13 @@ def time_tracking(request):
     
     global DICFILTER
 
+    userobj = User.objects.get(id=request.user.id)
+    elements = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj).order_by('-start_time').values('id', 'task_id__task_name', 'task_id__label', 'start_time', 'finish_time', 'total_time', 'task_id__tracking_sta')
+    DICFILTER = elements
+    total = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj).aggregate(total=Sum('total_time'))
+    log_form = log_prev_time_form()
+    start_form = start_task_form()
+
     if request.method == "POST":
         if request.POST.get('tracking_sta') == 't': # this is for stop buttom
             period_id = request.POST.get('period_id')
@@ -353,6 +368,45 @@ def time_tracking(request):
             finish_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             complete_period(period_id, request.user.id, start_time[0].start_time.strftime("%Y-%m-%d %H:%M:%S"), finish_time)
+
+        elif request.POST.get('log_time') == 't':
+            log_form = log_prev_time_form(request.POST)
+            if log_form.is_valid():
+                period = log_time(request, log_form)
+                shine_id = int(period.id)
+                log_form = log_prev_time_form()
+
+                return render(request, "apptime/time_tracking.html", context={
+                "elements":DICFILTER, 
+                "time_filter_form":form,
+                "log_form": log_form,
+                "start_form": start_form,
+                "file_form":formfile,
+                'format':DATETIMEFORMAT,
+                "total":total['total'],
+                'shine_id':shine_id
+                })
+            messages.error(request, "Could not log time")
+
+        elif request.POST.get('start_form') == 't':
+            start_form = start_task_form(request.POST)
+            if start_form.is_valid():
+                shine_id = start_task(request)
+                shine_id = shine_id.id
+                start_form = start_task_form()
+
+                return render(request, "apptime/time_tracking.html", context={
+                "elements":DICFILTER, 
+                "time_filter_form":form,
+                "log_form": log_form,
+                "start_form": start_form,
+                "file_form":formfile,
+                'format':DATETIMEFORMAT,
+                "total":total['total'],
+                'shine_id':shine_id
+                })
+            messages.error(request, "Could not start task. Invalid form.")
+            
 
         elif request.POST.get('track_filter') == 't': # this is to filter task history
             time = form.cleaned_data.get("time")
@@ -554,14 +608,11 @@ def time_tracking(request):
 
             return response
 
-    userobj = User.objects.get(id=request.user.id)
-    elements = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj).order_by('-start_time').values('id', 'task_id__task_name', 'task_id__label', 'start_time', 'finish_time', 'total_time', 'task_id__tracking_sta')
-    DICFILTER = elements
-    total = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj).aggregate(total=Sum('total_time'))
-
     return render(request=request, template_name="apptime/time_tracking.html", context={
         "elements":DICFILTER, 
-        "time_filter_form":form, 
+        "time_filter_form":form,
+        "log_form": log_form,
+        "start_form": start_form,
         "file_form":formfile,
         'format':DATETIMEFORMAT,
         "total":total['total']
@@ -592,75 +643,60 @@ def label_autocomplete(request):
 
 @login_required(login_url='login_pg')
 def start_task(request):
-    if request.method == "POST":
-        # get form
-        form = start_task_form(request.POST)
+    # Get task, label, start time, finish time...
+    task = request.POST["task"]
+    label = request.POST["label"]
+    start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Get task, label, start time, finish time...
-        task = request.POST["task"]
-        label = request.POST["label"]
-        start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    time_period_insert = create_incomplete_period(request.user.id, None, task, label, start_time)
 
-        create_incomplete_period(request.user.id, None, task, label, start_time)
-
-        # redirect user to time tracking page
-        return HttpResponseRedirect("time_tracking")
-
-    form = start_task_form()
-    return render(request=request, template_name="apptime/start_task.html", context={"start_form":form})
+    return time_period_insert
 
 
 @login_required(login_url='login_pg')
-def log_time(request):
-    if request.method == "POST":
-        # Get form
-        form = log_prev_time_form(request.POST)
-        if form.is_valid():
-            # Get task, label, start time, finish time...
-            task = request.POST["task"]
-            label = request.POST["label"]
-            start_time = form.cleaned_data.get("start_time")
-            finish_time = form.cleaned_data.get("finish_time")
+def log_time(request, log_form):
+    # Get task, label, start time, finish time...
+    task = request.POST["task"]
+    label = request.POST["label"]
+    start_time = log_form.cleaned_data.get("start_time")
+    finish_time = log_form.cleaned_data.get("finish_time")
 
-            # Adding the proper filters to the query
-            filter_kwargs = {}
-            dictionary = {'user_id':request.user.id,'task_name': task, 'label': label}
-            for key, value in dictionary.items():
-                if value:
-                    filter_kwargs[key] = value
+    # Adding the proper filters to the query
+    filter_kwargs = {}
+    dictionary = {'user_id':request.user.id,'task_name': task, 'label': label}
+    for key, value in dictionary.items():
+        if value:
+            filter_kwargs[key] = value
 
-            taskquery = tasks.objects.filter(**filter_kwargs)
+    taskquery = tasks.objects.filter(**filter_kwargs)
 
-            # debugging purposes
-            """
-            print('START:', start_time, type(start_time))
-            print('FINISH:', finish_time, type(finish_time))
-            """
+    # debugging purposes
+    """
+    print('START:', start_time, type(start_time))
+    print('FINISH:', finish_time, type(finish_time))
+    """
 
-            # If the task does not exists
-            if not taskquery:
-                # get user's object
-                userobj = User.objects.get(id=request.user.id)
+    # If the task does not exists
+    if not taskquery:
+        # get user's object
+        userobj = User.objects.get(id=request.user.id)
 
-                # Create task / insert it in the tasks table
-                task_to_insert = tasks(user_id = userobj, task_name = task, label = label)
-                task_to_insert.save()
+        # Create task / insert it in the tasks table
+        task_to_insert = tasks(user_id = userobj, task_name = task, label = label)
+        task_to_insert.save()
 
-                # get task
-                taskquery = tasks.objects.filter(**filter_kwargs)
+        # get task
+        taskquery = tasks.objects.filter(**filter_kwargs)
 
-            # calculate the total time in hours
-            total_time = finish_time - start_time  
-            total_time = total_time.total_seconds() / 3600
+    # calculate the total time in hours
+    total_time = finish_time - start_time  
+    total_time = total_time.total_seconds() / 3600
 
-            # insert time period into proper table
-            time_period_insert = work_periods(task_id = taskquery[0], start_time = start_time, finish_time = finish_time, total_time = total_time)
-            time_period_insert.save()
+    # insert time period into proper table
+    time_period_insert = work_periods(task_id = taskquery[0], start_time = start_time, finish_time = finish_time, total_time = total_time)
+    time_period_insert.save()
 
-        # redirect user to time tracking page
-        return HttpResponseRedirect("time_tracking")
-    form = log_prev_time_form()
-    return render(request=request, template_name="apptime/log_time.html", context={"log_form":form})
+    return time_period_insert
 
 
 @login_required(login_url='login_pg')
@@ -688,14 +724,6 @@ def edit_task(request, task_id):
 
         messages.error(request, "Could not update task")
         return HttpResponseRedirect(request.path)
-    
-    #get form
-    """
-    print(user_query[0]['timezone'])
-    form = account_form(initial={'username': user_query[0]['user__username'], 'email':user_query[0]['user__email'], 'timezone':user_query[0]['timezone']})
-    formpass = PasswordChangeForm(user=request.user, data=request.POST)
-    return render(request, 'apptime/account.html', context={'timezones': TIMEZONES,'account_form':form, 'edit':edit, 'PasswordChangeForm':formpass})
-    """
     
     userobj = User.objects.get(id=request.user.id)
     taskquery = tasks.objects.get(id=task_id, user_id=userobj)
@@ -824,7 +852,7 @@ def create_incomplete_period(user_id, task_id, name, label, start_time):
     time_period_insert = work_periods(task_id = taskquery[0], start_time = start_time, finish_time = None, total_time = None)
     time_period_insert.save()
 
-    return 0
+    return time_period_insert
 
 
 # completes a period created by create_incomplete_period(). Updates the empty fields for the work periods table and the tracking status of the tasks table.
