@@ -1,7 +1,7 @@
 from django import forms
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from apptime.models import profile
 import pytz
@@ -41,6 +41,10 @@ class NewUserForm(UserCreationForm):
 			user.save()
 		return user
 
+class ChangePass(PasswordChangeForm):
+	def __init__(self, *args, **kwargs):
+		super(ChangePass, self).__init__(*args, **kwargs)
+		self.fields['old_password'].widget.attrs.update({'autofocus': False})
 
 class timezoneform(forms.Form):
 	timezone = forms.CharField(label='timezone', widget=forms.Select(choices=TIMEZONES), required=False)

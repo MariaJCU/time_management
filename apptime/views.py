@@ -20,7 +20,7 @@ from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonRe
 from django.shortcuts import redirect, render
 from django.contrib.auth.models import User
 from apptime.models import tasks, work_periods, profile
-from .forms import NewUserForm, loginform, start_task_form, log_prev_time_form, agenda_form, task_full_form, time_filter_form, file_form, account_form, timezoneform
+from .forms import NewUserForm, loginform, start_task_form, log_prev_time_form, agenda_form, task_full_form, time_filter_form, file_form, account_form, timezoneform, ChangePass
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
@@ -36,13 +36,13 @@ TIMEZONES = pytz.common_timezones
 DICFILTER = {}
 # These variables are used as display formats for the tamplates' |date filter
 DATEFORMAT = 'D, N j, Y'
-DATETIMEFORMAT = 'N j, Y h:m a'
+DATETIMEFORMAT = 'N j, Y h:i a'
+DATEFORMATNOD = 'N j, Y'
 
 # Create your views here.
 def index(request):
     if request.user.is_authenticated:
         user_id = request.user.id
-        print(user_id)
 
         # if user is logged in change the time zone to the one in the user's database
         zone_query = profile.objects.select_related('user').get(user_id=user_id)
@@ -104,7 +104,6 @@ def account(request):
     user_query = profile.objects.select_related('user').filter(user_id=request.user.id).values('user__username', 'user__email', 'user__date_joined', 'timezone')
 
     if request.method == 'POST':
-
         # Chage user's settings
         if request.POST.get('account_edit') == 't':
             form = account_form(request.POST)
@@ -137,10 +136,9 @@ def account(request):
 
             return redirect('account')
                 
-
         # change user's password
         if request.POST.get('password_edit') == 't':
-            formpass = PasswordChangeForm(user=request.user, data=request.POST)
+            formpass = ChangePass(user=request.user, data=request.POST)
 
             if formpass.is_valid():
                 formpass.save()
@@ -152,19 +150,10 @@ def account(request):
 
             return redirect('account')
 
-        # check which bottom was pressed
-        if request.POST.get('edit_account') == 't':
-            edit = 1
-        else:
-            edit = 0
-
-        #get form
-        print(user_query[0]['timezone'])
-        form = account_form(initial={'username': user_query[0]['user__username'], 'email':user_query[0]['user__email'], 'timezone':user_query[0]['timezone']})
-        formpass = PasswordChangeForm(user=request.user)
-        return render(request, 'apptime/account.html', context={'timezones': TIMEZONES,'account_form':form, 'edit':edit, 'PasswordChangeForm':formpass})
-
-    return render(request, 'apptime/account.html', context={'timezones': TIMEZONES, 'UserDic':user_query[0]})
+    #get form
+    form = account_form(initial={'username': user_query[0]['user__username'], 'email':user_query[0]['user__email'], 'timezone':user_query[0]['timezone']})
+    formpass = ChangePass(user=request.user)
+    return render(request, 'apptime/account.html', context={'timezones': TIMEZONES,'account_form':form, 'PasswordChangeForm':formpass})
 
 
 @login_required(login_url='login_pg')
@@ -288,7 +277,10 @@ def agenda(request):
                 task_id = request.POST.get('task_id')
                 user_id = request.user.id
                 label = None
-                start_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                start_time = timezone.now()
+
+                print(start_time)
+
                 name = tasks.objects.raw('''SELECT apptime_tasks.id, apptime_tasks.task_name
                                                 FROM apptime_tasks
                                                 WHERE user_id_id = %s
@@ -743,7 +735,9 @@ def edit_task(request, task_id):
     "task_total": total['total'],
     "elements": elements,
     "edit": 1,
-    "task":task
+    "task":task,
+    "dateformat":DATEFORMATNOD,
+    "datetimeformat":DATETIMEFORMAT
     })
 
 
@@ -782,7 +776,9 @@ def taskinfo(request, task_id):
     return render(request, "apptime/taskinfo.html", {
         "task": task,
         "task_total": total,
-        "elements": elements
+        "elements": elements,
+        "dateformat":DATEFORMATNOD,
+        "datetimeformat":DATETIMEFORMAT
     })
 
 """

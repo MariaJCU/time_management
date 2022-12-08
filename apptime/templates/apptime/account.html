@@ -35,25 +35,8 @@ Account
 
     <div class='centering_div section'>
             <h1 class="float_left">Account </h1>
-
-            {% if edit != 1 %}
-                <form method="POST" class="float_left">
-                    {% csrf_token %} 
-                    <input type="hidden" value="t" id="edit_account" name="edit_account" readonly>
-                    <button class="buttonsubmit" type="submit">
-                        <i class="bi bi-pencil-square"></i> Edit
-                    </button>
-                </form>
-
-            {% else %}
-                <a class="buttonsubmit float_left" href="javascript: history.go(-1)" role="button">Back</a>
-
-            {% endif %}
-
     </div>
 
-    
-    {% if edit == 1 %}
     <div class='centering_div section'>
         <h4 class="clear">Settings</h4>
         <form method="POST">
@@ -83,20 +66,5 @@ Account
             <button class="buttonsubmit float_right" type="submit">Change Password</button>
         </form>
     </div>
-                
-    {% else %}
-    <div class='centering_div section'>
-        <div class="round_box clear">
-            <div class="centering_div">
-                <p>Username: {{ UserDic.user__username }}</p>
-                <p>Email: {{ UserDic.user__email }}</p>
-                <p>Timezone: {{ UserDic.timezone }}</p>
-                <p>Joined on {{ UserDic.user__date_joined }}</p>
-
-            </div>
-        </div>
-    </div>
-
-    {% endif %}
 
 {% endblock %}
