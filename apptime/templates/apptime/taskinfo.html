@@ -1,7 +1,16 @@
-{% extends "apptime/unreg_layout.html" %}
+{% extends "apptime/layout.html" %}
 
 {% block title %}
 Task info
+{% endblock %}
+
+{% block head %}
+
+    {% load static %}
+    {{ task_full_form.media }}
+    <script src="{% static 'tinymce/tinymce.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'tinymce/custom.js' %}" ></script>
+
 {% endblock %}
 
 {% load crispy_forms_tags %} 
@@ -61,7 +70,7 @@ Task info
 
         <div class="round_box p-3 clear">
             {% if task.description %}
-                <pre>{{ task.description }}</pre>
+                <pre>{{ task.description|safe }}</pre>
 
             {% else %}
             <div class="container">

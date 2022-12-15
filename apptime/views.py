@@ -39,6 +39,11 @@ DATEFORMAT = 'D, N j, Y'
 DATETIMEFORMAT = 'N j, Y h:i a'
 DATEFORMATNOD = 'N j, Y'
 
+def text_editor(request):
+    form = task_full_form()
+    return render(request=request, template_name="apptime/text_editor_test.html", context={"form":form})
+
+
 # Create your views here.
 def index(request):
     if request.user.is_authenticated:
@@ -96,6 +101,11 @@ def register(request):
 def logout_view(request):
     logout(request)
     return HttpResponseRedirect("login_pg") 
+
+
+@login_required(login_url='login_pg')
+def month_calendar(request):
+    return render(request=request, template_name="apptime/month_calendar.html")
 
 
 @login_required(login_url='login_pg')

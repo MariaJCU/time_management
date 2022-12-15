@@ -1,4 +1,4 @@
-{% extends "apptime/unreg_layout.html" %}
+{% extends "apptime/layout.html" %}
 
 {% block title %}
 Agenda
@@ -204,7 +204,18 @@ Agenda
                                     {% csrf_token %}
 
                                     <input type="hidden" name="add_date" id="add_date" value="{{ date }}" readonly>
-                                    {{ task_full_form|crispy }}
+                                    {% for field in task_full_form %}
+
+                                        {% if field.name == 'label' %}
+                                            <label>Label</label>
+                                            {{ field|as_crispy_field }}
+                                        {% elif field.name == 'task' %}
+                                            <label>Task</label>
+                                            {{ field|as_crispy_field }}
+                                        {% else %}
+                                            {{ field|as_crispy_field }}
+                                        {% endif %}
+                                    {% endfor %}
                                     <button type="submit" class="buttonsubmit float_right">Create Task</button>
 
                                 </form>

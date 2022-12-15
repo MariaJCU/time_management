@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.utils import timezone
 import pytz
+from tinymce import models as tinymce_models
 
 
 # Create your models here.
@@ -15,7 +16,8 @@ class tasks(models.Model):
     tracking_sta = models.BooleanField(default=False)
     assigned_date = models.DateField(default=timezone.now)
     creation_date = models.DateTimeField(auto_now_add=True)
-    description = models.TextField(default="None")
+    description = tinymce_models.HTMLField(default="None")
+    #description = models.TextField(default="None")
 
 
 class work_periods(models.Model):

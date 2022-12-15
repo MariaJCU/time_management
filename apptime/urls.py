@@ -1,5 +1,5 @@
 from atexit import register
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -15,6 +15,9 @@ urlpatterns = [
     path("create_task/<str:date>", views.create_task, name="create_task"),
     path("edit_task/<int:task_id>", views.edit_task, name="edit_task"),
     path("account", views.account, name="account"),
-    path('task_autocomplete/', views.task_autocomplete, name='task_autocomplete'),
-    path('label_autocomplete/', views.label_autocomplete, name='label_autocomplete')
+    path('task_autocomplete', views.task_autocomplete, name='task_autocomplete'),
+    path('label_autocomplete', views.label_autocomplete, name='label_autocomplete'),
+    path('tinymce', include('tinymce.urls')),
+    path('pages', include('django.contrib.flatpages.urls')),
+    path('month_calendar', views.month_calendar, name='month_calendar')
 ]

@@ -5,6 +5,9 @@ from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from apptime.models import profile
 import pytz
+from django.contrib.flatpages.models import FlatPage
+from tinymce.widgets import TinyMCE
+from tinymce import models as tinymce_models
 
 # Global variables
 TIMEZONES = tuple(zip(pytz.common_timezones, pytz.common_timezones))
@@ -72,16 +75,10 @@ class agenda_form(forms.Form):
 
 
 class task_full_form(forms.Form):
-	task = forms.CharField(label='Task', max_length=100, required=False)
-	label = forms.CharField(label='Label', max_length=100, required=False)
+	task = forms.CharField(label='', max_length=100, required=False)
+	label = forms.CharField(label='', max_length=100, required=False)
 	assigned = forms.DateTimeField(label='Due', input_formats=['%Y-%m-%d'], widget=dateinput, required=False)
-	description = forms.CharField(widget=forms.Textarea, required=False)
-
-	def __init__(self, *args, **kwargs):
-		super().__init__(*args, **kwargs)
-		self.helper = FormHelper()
-		self.fields['task'].label = False
-		self.fields['label'].label = False
+	description = forms.CharField(widget=TinyMCE(), required=False)
 
 
 class time_filter_form(forms.Form):
