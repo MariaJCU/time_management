@@ -19,8 +19,8 @@ import json
 from django.http import HttpResponse, HttpResponseRedirect, FileResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.contrib.auth.models import User
-from apptime.models import tasks, work_periods, profile
-from .forms import NewUserForm, loginform, start_task_form, log_prev_time_form, agenda_form, task_full_form, time_filter_form, file_form, account_form, timezoneform, ChangePass
+from apptime.models import tasks, work_periods, profile, month_note
+from .forms import NewUserForm, loginform, start_task_form, log_prev_time_form, agenda_form, task_full_form, time_filter_form, file_form, account_form, timezoneform, ChangePass, text_editor_form
 from django.contrib.auth import login, authenticate, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import PasswordChangeForm
@@ -31,13 +31,19 @@ from django.db import connection, connections, transaction
 from django.utils import timezone
 from django.db.models import F, Sum
 
+
 # Global variables
 TIMEZONES = pytz.common_timezones
 DICFILTER = {}
+APPTIME_TODAY = timezone.now()
+
+
+
 # These variables are used as display formats for the tamplates' |date filter
 DATEFORMAT = 'D, N j, Y'
 DATETIMEFORMAT = 'N j, Y h:i a'
 DATEFORMATNOD = 'N j, Y'
+
 
 def text_editor(request):
     form = task_full_form()
@@ -104,8 +110,85 @@ def logout_view(request):
 
 
 @login_required(login_url='login_pg')
-def month_calendar(request):
-    return render(request=request, template_name="apptime/month_calendar.html")
+def month_calendar(request, year, month, day):
+    month_dict = []
+    form = agenda_form()
+
+    note = month_note.objects.filter(user_id=request.user.id)
+    if not note:
+        # get user's object
+        userobj = User.objects.get(id=request.user.id)
+
+        insert = month_note(user_id = userobj)
+        insert.save()
+
+        note = month_note.objects.filter(user_id=request.user.id)
+
+    editor_form = text_editor_form(initial={'editor':note[0].notes})
+
+    if request.method == "POST":
+        # Get the entered form
+        if request.POST.get('date_entered') == 't':
+            form = agenda_form(request.POST)
+            if form.is_valid():
+                now = form.cleaned_data.get("agendadate")
+
+                # create the month's grid
+                month_dict = calc_month(now)
+            else: 
+                messages.error(request, "Could not find date. Invalid information")
+        elif request.POST.get('task_id'):
+            # Change the completition status of the task
+            task_id = int(request.POST.get('task_id'))
+            comple_status = tasks.objects.get(id=task_id, user_id=request.user.id)
+            if comple_status.comple_sta == True:
+                comple_status.comple_sta = False
+                comple_status.save()
+            else:
+                comple_status.comple_sta = True
+                comple_status.save()
+        elif request.POST.get('month_notes') == 't':
+            note = month_note.objects.filter(user_id=request.user.id)
+            
+            if not note:
+                # get user's object
+                userobj = User.objects.get(id=request.user.id)
+
+                insert = month_note(user_id = userobj)
+                insert.save()
+
+                note = month_note.objects.filter(user_id=request.user.id)
+            
+            editor_form = text_editor_form(request.POST)
+            if editor_form.is_valid():
+                note[0].notes = request.POST.get("editor")
+                note[0].save()
+                messages.success(request, 'Your notes were saved!')
+            else:
+                messages.error(request, "Could not save. Invalid information.")
+
+    if not month_dict:
+        # find the date and calculate the month's grid
+        now = datetime(year, month, day)
+        month_dict = calc_month(now)
+
+    # find the next and previous month
+    pre = now.replace(day=1) - timedelta(days=1)
+    pos = now.replace(day=28) + timedelta(days=4) 
+
+    # get the tasks for each day of the month.
+    task_list = tasks.objects.filter(user_id__id=request.user.id, assigned_date__range=(now.replace(day=1), last_day_of_month(now))).values('id','task_name', 'label', 'comple_sta', 'tracking_sta', 'assigned_date')
+
+    return render(request=request, template_name="apptime/month_calendar.html", context={
+        'form':form,
+        'editor_form':editor_form,
+        'month_dict':month_dict, 
+        'format':DATEFORMATNOD,
+        'apptime_today':APPTIME_TODAY,
+        'pre_month':pre,
+        'pos_month':pos,
+        'task_list':task_list
+        })
 
 
 @login_required(login_url='login_pg')
@@ -163,7 +246,7 @@ def account(request):
     #get form
     form = account_form(initial={'username': user_query[0]['user__username'], 'email':user_query[0]['user__email'], 'timezone':user_query[0]['timezone']})
     formpass = ChangePass(user=request.user)
-    return render(request, 'apptime/account.html', context={'timezones': TIMEZONES,'account_form':form, 'PasswordChangeForm':formpass})
+    return render(request, 'apptime/account.html', context={'timezones': TIMEZONES,'account_form':form, 'PasswordChangeForm':formpass, 'apptime_today':APPTIME_TODAY,})
 
 
 @login_required(login_url='login_pg')
@@ -212,7 +295,7 @@ def agenda(request):
                 tasklist = find_tasks_for_week(request.user.id, datesdic, None)
 
                 # Display the tasks
-                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
+                return render(request, "apptime/agenda.html", context={'apptime_today':APPTIME_TODAY, "datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
 
             elif request.POST.get('agendaforward') == 't':
                 now = request.POST["sunday"]
@@ -229,7 +312,7 @@ def agenda(request):
                 tasklist = find_tasks_for_week(request.user.id, datesdic, None)
 
                 # Display the tasks
-                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
+                return render(request, "apptime/agenda.html", context={'apptime_today':APPTIME_TODAY, "datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
 
             elif request.POST.get('date_entered') == 't':
                 form = agenda_form(request.POST)
@@ -248,7 +331,7 @@ def agenda(request):
                 # Get the tasks for the week
                 tasklist = find_tasks_for_week(request.user.id, datesdic, None)
 
-                return render(request, "apptime/agenda.html", context={"datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
+                return render(request, "apptime/agenda.html", context={'apptime_today':APPTIME_TODAY, "datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
 
             elif request.POST.get('add_date'):
                 task_form = task_full_form(request.POST)
@@ -342,7 +425,8 @@ def agenda(request):
         "tasklist":tasklist, 
         "agenda_form":form,
         "task_full_form":task_form,
-        'format':DATEFORMAT
+        'format':DATEFORMAT,
+        'apptime_today':APPTIME_TODAY,
         })
 
 
@@ -386,7 +470,8 @@ def time_tracking(request):
                 "file_form":formfile,
                 'format':DATETIMEFORMAT,
                 "total":total['total'],
-                'shine_id':shine_id
+                'shine_id':shine_id,
+                'apptime_today':APPTIME_TODAY,
                 })
             messages.error(request, "Could not log time")
 
@@ -405,7 +490,8 @@ def time_tracking(request):
                 "file_form":formfile,
                 'format':DATETIMEFORMAT,
                 "total":total['total'],
-                'shine_id':shine_id
+                'shine_id':shine_id,
+                'apptime_today':APPTIME_TODAY,
                 })
             messages.error(request, "Could not start task. Invalid form.")
             
@@ -450,7 +536,8 @@ def time_tracking(request):
                 "time_filter_form":form, 
                 "file_form":formfile, 
                 'format':DATETIMEFORMAT,
-                'total':total['total']
+                'total':total['total'],
+                'apptime_today':APPTIME_TODAY,
                 })
 
         elif request.POST.get("order") == 't':
@@ -478,7 +565,8 @@ def time_tracking(request):
                 "file_form":formfile, 
                 "order":order, 
                 "format":DATETIMEFORMAT,
-                'total':total['total']
+                'total':total['total'],
+                'apptime_today':APPTIME_TODAY,
                 })
 
         # CVS file download
@@ -617,7 +705,8 @@ def time_tracking(request):
         "start_form": start_form,
         "file_form":formfile,
         'format':DATETIMEFORMAT,
-        "total":total['total']
+        "total":total['total'],
+        'apptime_today':APPTIME_TODAY,
         })
 
 
@@ -747,7 +836,8 @@ def edit_task(request, task_id):
     "edit": 1,
     "task":task,
     "dateformat":DATEFORMATNOD,
-    "datetimeformat":DATETIMEFORMAT
+    "datetimeformat":DATETIMEFORMAT,
+    'apptime_today':APPTIME_TODAY,
     })
 
 
@@ -788,12 +878,50 @@ def taskinfo(request, task_id):
         "task_total": total,
         "elements": elements,
         "dateformat":DATEFORMATNOD,
-        "datetimeformat":DATETIMEFORMAT
+        "datetimeformat":DATETIMEFORMAT,
+        'apptime_today':APPTIME_TODAY,
     })
 
 """
 functions used above:
 """
+# given a daytime, the function calculates the last day of the current month
+def last_day_of_month(now):
+    # find the next month, then return the number of days of the next month to end in the last day.
+    next_month = now.replace(day=28) + timedelta(days=4)
+    last_day = next_month - timedelta(days=next_month.day)
+
+    return last_day
+
+# returns a lists of lists that will be displayed in the month page. It requires a datetime object to calculate the 7 by 6 grid for the month.
+def calc_month(now):
+    # Find the date that would be first displayed in my 7x6 grid
+    # find the sunday of the now week
+    weekday = now.weekday()
+    while not (weekday == 6):
+        now = now - timedelta(days=1)
+        weekday = now.weekday()
+
+    sunday = now
+
+    # subtract 7 days from now until the month is different
+    while (now.month == sunday.month):
+        now = now - timedelta(days=7)
+
+    # create a dict with the 42 corresponding dates.
+    month_dict = []
+    week_dict = []
+    
+    for i in range(6):
+        week_dict = []
+        for j in range(7):
+            week_dict.append(now)
+            now = now + timedelta(days=1)
+        month_dict.append(week_dict)
+
+    # Return the dict with the dates 
+    return month_dict
+
 # returns a dictionary with keys (sunday to saturday) and its dates as strings given the date of sunday (in datetime type) and a string format (ex: "%Y-%m-%d").
 def calc_week(now, format):
     # Create a dictionary with the dates that need to be displayed starting from Sunday

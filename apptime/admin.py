@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
 
-from .models import tasks, work_periods, profile
+from .models import tasks, work_periods, profile, month_note
 
 
 class tasksadmin(admin.ModelAdmin):
@@ -26,3 +26,4 @@ admin.site.register(User, UserAdmin)
 # Register your models here.
 admin.site.register(tasks, tasksadmin)
 admin.site.register(work_periods)
+admin.site.register(month_note)

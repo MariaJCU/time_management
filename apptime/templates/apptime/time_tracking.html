@@ -339,22 +339,22 @@ Time Tracking
                 {% for element in elements %}
                 <tr id="odd_color_table" {% if shine_id == element.id %} class="a_blinking_back" {% endif %}>
                     <td>
-                        <div id="left_no_padd">
-                            {{ element.task_id__task_name }}
-                        </div>
                         {% if not element.finish_time %}
-                        <div id="left_no_padd">
-                            <form method="POST">
-                                {% csrf_token %} 
-                                <input type="hidden" name="tracking_sta" id="tracking_sta" value="t" readonly>
-                                <input type="hidden" name="period_id" id="period_id" value="{{ element.id }}" readonly>
-                                <button type="submit" class="buttonicon">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
-                                        <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
-                                    </svg>
-                                </button>
-                            </form>
-                        </div>
+                        <form method="POST">
+                            {% csrf_token %} 
+                            <input type="hidden" name="tracking_sta" id="tracking_sta" value="t" readonly>
+                            <input type="hidden" name="period_id" id="period_id" value="{{ element.id }}" readonly>
+                            <span>
+                                {{ element.task_id__task_name }}
+                            </span>
+                            <button type="submit" class="buttonicon" id="icon_text">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-play-fill" viewBox="0 0 16 16">
+                                    <path d="m11.596 8.697-6.363 3.692c-.54.313-1.233-.066-1.233-.697V4.308c0-.63.692-1.01 1.233-.696l6.363 3.692a.802.802 0 0 1 0 1.393z"/>
+                                </svg>
+                            </button>
+                        </form>
+                        {% else %}
+                            {{ element.task_id__task_name }}
                         {% endif %}
                     </td>
                     <td>

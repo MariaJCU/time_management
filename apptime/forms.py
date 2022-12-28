@@ -108,3 +108,7 @@ class account_form(forms.Form):
 	username = forms.CharField(label='Username', max_length=100, required=False)
 	email = forms.EmailField(label='Email', max_length=100, required=False)
 	timezone = forms.TypedChoiceField(label='Timezone', choices=TIMEZONES, required=False)
+
+
+class text_editor_form(forms.Form):
+	editor = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30, 'height':1000}), required=False)

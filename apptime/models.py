@@ -17,7 +17,6 @@ class tasks(models.Model):
     assigned_date = models.DateField(default=timezone.now)
     creation_date = models.DateTimeField(auto_now_add=True)
     description = tinymce_models.HTMLField(default="None")
-    #description = models.TextField(default="None")
 
 
 class work_periods(models.Model):
@@ -32,3 +31,8 @@ class profile(models.Model):
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     timezone = models.CharField(max_length=32, choices=TIMEZONES, default='UTC')
+
+
+class month_note(models.Model):
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    notes = tinymce_models.HTMLField(default="None")

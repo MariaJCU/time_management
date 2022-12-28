@@ -19,5 +19,5 @@ urlpatterns = [
     path('label_autocomplete', views.label_autocomplete, name='label_autocomplete'),
     path('tinymce', include('tinymce.urls')),
     path('pages', include('django.contrib.flatpages.urls')),
-    path('month_calendar', views.month_calendar, name='month_calendar')
+    path('month_calendar/<int:year>/<int:month>/<int:day>', views.month_calendar, name='month_calendar')
 ]

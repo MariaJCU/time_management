@@ -1,0 +1,170 @@
+{% extends "apptime/layout.html" %}
+
+{% block title %}
+Month
+{% endblock %}
+
+{% block head %}
+
+    {% load static %}
+    {{ editor_form.media }}
+    <script src="{% static 'tinymce/tinymce.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'tinymce/custom.js' %}" ></script>
+
+{% endblock %}
+
+{% load crispy_forms_tags %} 
+
+{% block body %}
+
+{% if messages %}
+    <div class="px-3">
+        {% for message in messages %}
+            {% if message.tags == "success" %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+
+            {% else %}
+            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-8">
+            <div class="row">
+                <div class="col">
+                    <div class="row">
+                        <!-- Controls and buttons -->
+                        <form method="POST" class="form-inline">
+                            <div class="mx-sm-3 mb-2">
+                                {% csrf_token %}
+                                <input type="text" name="date_entered" value="t" hidden>
+                                {{ form|crispy }}
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary mb-2">
+                                Go
+                            </button>  
+                        </form>
+                        <div class="btn-group mx-sm-3 mb-2" role="group">
+                            <a type="button" class="btn btn-primary" href="{% url 'month_calendar' pre_month.year pre_month.month pre_month.day %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                                </svg>
+                            </a>
+                            <a type="button" class="btn btn-primary" href="{% url 'month_calendar' pos_month.year pos_month.month pos_month.day %}">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <!-- Calendar -->
+                    <div class="container-fluid p-0">
+                        <table class="color-light lay-fix">
+                            <tr>
+                                <th>
+                                    <h4 class="color_bl">Sun</h4>
+                                </th>
+                                <th>
+                                    <h4 class="color_bl">Mon</h4>
+                                </th>
+                                <th>
+                                    <h4 class="color_bl">Tue</h4>
+                                </th>
+                                <th>
+                                    <h4 class="color_bl">Wed</h4>
+                                </th>
+                                <th>
+                                    <h4 class="color_bl">Thu</h4>
+                                </th>
+                                <th>
+                                    <h4 class="color_bl">Fri</h4>
+                                </th>
+                                <th>
+                                    <h4 class="color_bl">Sat</h4>
+                                </th>
+                            </tr>
+                            {% for week in month_dict %}
+                                <tr>
+                                {% for day in week %}
+                                    <td class="calendar-data">
+                                        <div class="square">
+                                            <div class="signika color_bl">
+                                                {{ day|date:format }}
+                                            </div>
+                                            
+                                            {% for task in task_list %}
+                                                {% if task.assigned_date|date:format == day|date:format %}
+                                                    <div class="row">
+                                                        <div class="col-auto">
+                                                            <form method="POST">
+                                                                {% csrf_token %}
+                                                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                                            {% if task.comple_sta %}
+                                                                <button type="submit" class="buttonicon" id="icon_text">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-x" viewBox="0 0 16 16">
+                                                                        <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                                                    </svg>
+                                                                </button>
+                                                            {% else %}
+                                                                <button type="submit" class="buttonicon" id="icon_text">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-circle-fill" viewBox="0 0 16 16">
+                                                                        <circle cx="8" cy="8" r="4"/>
+                                                                    </svg>
+                                                                </button>
+                                                            {% endif %}
+                                                            
+                                                                <span class="signika color_bl">
+                                                                    {{ task.task_name }}
+                                                                </span>
+                                                                
+                                                            </form>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </td>
+                                {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <!-- Notes -->
+            <div class="container-fluid">
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="month_notes" value="t">
+                    {{ editor_form|crispy }}
+                    <button type="submit" class="btn btn-primary mb-2">
+                        Go
+                    </button> 
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
