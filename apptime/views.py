@@ -568,6 +568,12 @@ def time_tracking(request):
                 'total':total['total'],
                 'apptime_today':APPTIME_TODAY,
                 })
+        
+        elif request.POST.get("delete") == 't':
+            #get the object
+            userobj = User.objects.get(id=request.user.id)
+            period_delete = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj, id=request.POST.get('period_id'))
+            period_delete[0].delete()
 
         # CVS file download
         elif request.POST.get('csvdownload') == 't':

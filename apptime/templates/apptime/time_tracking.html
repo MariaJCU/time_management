@@ -33,7 +33,18 @@ Time Tracking
             });
         });
 
+        const elements = document.getElementsByClassName("row-ja")
 
+        for (let i=0, l=elements.length; i<l; i++) {
+            document.getElementsByClassName("row-ja")[i].addEventListener('mouseover', function() {
+                document.getElementsByClassName("last-td")[i].innerHTML = '<button type="submit" class="btn btn-primary"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-trash-fill" viewBox="0 0 16 16"><path d="M2.5 1a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1H3v9a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V4h.5a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H10a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1H2.5zm3 4a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 .5-.5zM8 5a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-1 0v-7A.5.5 0 0 1 8 5zm3 .5v7a.5.5 0 0 1-1 0v-7a.5.5 0 0 1 1 0z"/></svg></button>';
+            });
+
+            document.getElementsByClassName("row-ja")[i].addEventListener('mouseout', function() {
+                document.getElementsByClassName("last-td")[i].innerHTML = '';
+            });
+        }
+        
         $("#popover-log").popover({ 
             html : true,
             sanitize: false,
@@ -337,7 +348,7 @@ Time Tracking
                 </tr>
 
                 {% for element in elements %}
-                <tr id="odd_color_table" {% if shine_id == element.id %} class="a_blinking_back" {% endif %}>
+                <tr id="odd_color_table" {% if shine_id == element.id %} class="a_blinking_back row-ja" {% else %} class="row-ja" {% endif %}>
                     <td>
                         {% if not element.finish_time %}
                         <form method="POST">
@@ -364,7 +375,15 @@ Time Tracking
                         {{ element.start_time|date:format }} - {{ element.finish_time|date:format }}
                     </td>
                     <td>
-                        {{ element.total_time }}
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete" id="delete" value="t" readonly>
+                            <input type="hidden" name="period_id" id="period_id" value="{{ element.id }}" readonly>
+                            <span>
+                                {{ element.total_time }}
+                            </span>
+                            <div class="last-td float_right"></div>
+                        </form>
                     </td>
                 </tr>
                 {% endfor %}
