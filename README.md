@@ -1,8 +1,8 @@
-#Time Management 
+# Time Management App
 
 This is a Django application that simulates an agenda with time-tracking capabilities. The application provides an agenda, a calendar, and a time tracking page. You can create to-do lists for every day and track the time you worked in each task.
 
-##Usage
+## Usage
 * Download a zip at https://github.com/MariaJCU/time_management
   * Unzip time_management-master.zip
 * Create a virtual environment. If you are in ubuntu:
@@ -23,7 +23,7 @@ This is a Django application that simulates an agenda with time-tracking capabil
   * Python manage.py runserver
 * Go to “register” and create your account
 
-##Credits
+## Credits
 The following libraries and projects were used for this repository:
 * https://getbootstrap.com/
 * https://www.djangoproject.com/
