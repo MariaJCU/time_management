@@ -24,7 +24,7 @@ This is a Django application that simulates an agenda with time-tracking capabil
 * Go to “register” and create your account
 
 ## Credits
-The following libraries and projects were used for this repository:
+The following libraries and projects were used in this repository:
 * https://getbootstrap.com/
 * https://www.djangoproject.com/
 * https://www.tiny.cloud
