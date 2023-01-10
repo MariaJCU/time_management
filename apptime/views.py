@@ -575,6 +575,8 @@ def time_tracking(request):
             period_delete = work_periods.objects.select_related('task_id').filter(task_id__user_id=userobj, id=request.POST.get('period_id'))
             period_delete[0].delete()
 
+            messages.success(request, "The time period was deleted")
+
         # CVS file download
         elif request.POST.get('csvdownload') == 't':
             # Define Django project base directory

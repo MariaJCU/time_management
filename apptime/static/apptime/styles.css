@@ -166,6 +166,7 @@ table
     margin-bottom: 1rem;
     width: 100%;
     color: #2f2f2f;
+    font-size: 15px;
 }
 
 .lay-fix {
@@ -298,13 +299,17 @@ p
     background-color: #2f2f2f;
 }
 
-.btn-primary, .btn-primary:active, .btn-primary:visited {
+.btn-primary, .btn-primary:active, .btn-primary:visited, 
+.btn-sm, .btn-sm:active, .btn-sm:visited,
+.btn-xs, .btn-xs:active, .btn-xs:visited
+{
     background-color: #2f2f2f !important;
     color: white !important;
     opacity: 0.8 !important;
+    border: #2f2f2f !important;
 }
 
-.btn-primary:hover {
+.btn-primary:hover, .btn-sm:hover, .btn-xs:hover {
     opacity: 1 !important;
     color: white !important;
 }
