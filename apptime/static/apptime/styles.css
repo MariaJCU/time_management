@@ -8,6 +8,7 @@ html, body {
 body {
     height: 100vh;
     width: 100vw;
+    overflow-x: hidden;
 }
 
 * {
@@ -147,6 +148,18 @@ pre {
     background-color:  #c0ded5;
     border-radius: 16px;
     height: 100%;
+}
+
+.full-height-box {
+    display: flex;
+    flex-flow: column;
+    height: 100%;
+}
+
+.full-height-box .full-height-item {
+    flex-grow: 0;
+    flex-shrink: 1;
+    flex-basis: auto;
 }
 
 .square {
@@ -364,7 +377,20 @@ input, label {
     border-color: #eaece5;
 }
 
+.font-white {
+    color: white;
+}
+
 .calendar-data:hover {
     background-color: #d8e7b1;
     border-radius: 5px;
+}
+
+.color-dark {
+    background-color: #2f2f2f;
+    border-color: #2f2f2f;
+}
+
+.transparent-8 {
+    opacity: 0.8;
 }

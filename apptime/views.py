@@ -436,7 +436,6 @@ def time_tracking(request):
     formfile.is_valid()
 
     form = time_filter_form(request.POST or None)
-    form.is_valid()
     
     global DICFILTER
 
@@ -497,48 +496,57 @@ def time_tracking(request):
             
 
         elif request.POST.get('track_filter') == 't': # this is to filter task history
-            time = form.cleaned_data.get("time")
-            task_name = request.POST["task"]
-            label = request.POST["label"]
-            assigned_date = form.cleaned_data.get("assigned")
-            creation_date = form.cleaned_data.get("created")
-            completed = form.cleaned_data.get("completed")
-            start = form.cleaned_data.get("start")
-            final = form.cleaned_data.get("final")
-            userobj = User.objects.get(id=request.user.id)
+            if form.is_valid():
+                time = form.cleaned_data.get("time")
+                print("TIME: ", time)
+                task_name = request.POST["task"]
+                label = request.POST["label"]
+                assigned_date = form.cleaned_data.get("assigned")
+                creation_date = form.cleaned_data.get("created")
+                completed = form.cleaned_data.get("completed")
+                start = form.cleaned_data.get("start")
+                final = form.cleaned_data.get("final")
+                userobj = User.objects.get(id=request.user.id)
 
-            # choosing which filters to apply and making timezone conversions.
-            format='%Y-%m-%d %H:%M'
-            filter_kwargs = {}
-            dictionary = {'start_time__gte':start,'finish_time__lte': final,'task_id__comple_sta': completed,'task_id__user_id': userobj, 'task_id__task_name__icontains': task_name, 'task_id__label__icontains': label, 'task_id__assigned_date__icontains': assigned_date, 'task_id__creation_date__icontains': creation_date}
-            for key, value in dictionary.items():
-                if value:
-                    if key in ['finish_time__lte','start_time__gte','task_id__creation_date__contains']:
-                        filter_kwargs[key] = str(value.astimezone(pytz.timezone('UTC')).strftime(format))
-                    else:
-                        filter_kwargs[key] = value
-            
-            elements = work_periods.objects.select_related('task_id').filter(**filter_kwargs).order_by('-start_time').values('id', 'task_id__task_name', 'task_id__label', 'start_time', 'finish_time', 'total_time', 'task_id__tracking_sta')
-            if time:
-                time = str(time.astimezone(pytz.timezone('UTC')).strftime(format))
-                temp_finish = elements
-                temp_start = elements
+                # choosing which filters to apply and making timezone conversions.
+                format='%Y-%m-%d %H:%M'
+                filter_kwargs = {}
+                dictionary = {'start_time__gte':start,'finish_time__lte': final,'task_id__comple_sta': completed,'task_id__user_id': userobj, 'task_id__task_name__icontains': task_name, 'task_id__label__icontains': label, 'task_id__assigned_date__icontains': assigned_date, 'task_id__creation_date__icontains': creation_date}
+                for key, value in dictionary.items():
+                    if value:
+                        if key in ['finish_time__lte','start_time__gte','task_id__creation_date__contains']:
+                            filter_kwargs[key] = str(value.astimezone(pytz.timezone('UTC')).strftime(format))
+                        else:
+                            filter_kwargs[key] = value
+                
+                # the time filter is applied over the range filter to avoid errors
+                if time:
+                    if 'finish_time__gte' in filter_kwargs.keys():
+                        filter_kwargs.pop('finish_time__lte')
+                    if 'start_time__gte' in filter_kwargs.keys():
+                        filter_kwargs.pop('start_time__gte')
 
-                temp_finish = temp_finish.filter(finish_time__gte=time)
-                temp_start = temp_start.filter(start_time__lte=time)
-                elements = temp_finish.intersection(temp_start)
+                    filter_kwargs['start_time__lte'] = str(time.astimezone(pytz.timezone('UTC')).strftime(format))
+                    filter_kwargs['finish_time__gte'] = str(time.astimezone(pytz.timezone('UTC')).strftime(format))
+                    
+                elements = work_periods.objects.select_related('task_id').filter(**filter_kwargs).order_by('-start_time').values('id', 'task_id__task_name', 'task_id__label', 'start_time', 'finish_time', 'total_time', 'task_id__tracking_sta')
+                DICFILTER = elements
 
-            DICFILTER = elements
-            total = DICFILTER.aggregate(total=Sum('total_time'))
+                total = elements.aggregate(Sum("total_time"))
+                print("total: ", total)
 
-            return render(request, "apptime/time_tracking.html", context={
-                "elements":elements, 
-                "time_filter_form":form, 
-                "file_form":formfile, 
-                'format':DATETIMEFORMAT,
-                'total':total['total'],
-                'apptime_today':APPTIME_TODAY,
-                })
+                return render(request, "apptime/time_tracking.html", context={
+                    "elements":elements, 
+                    "time_filter_form":form, 
+                    "file_form":formfile, 
+                    'format':DATETIMEFORMAT,
+                    'total':total['total_time__sum'],
+                    'apptime_today':APPTIME_TODAY,
+                    })
+                
+            else:
+                messages.error(request, "Could not filter time history. Invalid form.")
+
 
         elif request.POST.get("order") == 't':
 

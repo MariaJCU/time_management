@@ -82,7 +82,7 @@ class task_full_form(forms.Form):
 
 
 class time_filter_form(forms.Form):
-	time = forms.DateTimeField(label='Time', input_formats=['%Y-%m-%d %H:%M'], widget=datetimeinput, required=False, )
+	time = forms.DateTimeField(label='Time', input_formats=['%Y-%m-%d %H:%M'], required=False, widget=datetimeinput)
 	task = forms.CharField(label='Task', max_length=100, required=False, widget=forms.TextInput(
         attrs={
             'class': 'basicAutoComplete1',
