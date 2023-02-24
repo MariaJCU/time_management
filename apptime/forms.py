@@ -78,7 +78,7 @@ class task_full_form(forms.Form):
 	task = forms.CharField(label='', max_length=100, required=False)
 	label = forms.CharField(label='', max_length=100, required=False)
 	assigned = forms.DateTimeField(label='Due', input_formats=['%Y-%m-%d'], widget=dateinput, required=False)
-	description = forms.CharField(widget=TinyMCE(), required=False)
+	description = forms.CharField(widget=TinyMCE(attrs={'id':'textarea-pop', 'height':100}), required=False)
 
 
 class time_filter_form(forms.Form):
@@ -111,4 +111,4 @@ class account_form(forms.Form):
 
 
 class text_editor_form(forms.Form):
-	editor = forms.CharField(widget=TinyMCE(attrs={'cols': 80, 'rows': 30, 'height':1000}), required=False)
+	editor = forms.CharField(widget=TinyMCE(attrs={'id':'textarea-full', 'cols': 80, 'rows': 30, 'height':1000}), required=False)

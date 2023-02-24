@@ -126,6 +126,13 @@ pre {
     padding-bottom: 15px;
 }
 
+/* Overflow */
+.ellip {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 /* alignment stuff */
 .centering_div {
     width: 50%;
@@ -164,7 +171,7 @@ pre {
 
 .square {
     aspect-ratio: 1/1;
-    width: auto;
+    width: 100%;
 }
 
 .wid100 {

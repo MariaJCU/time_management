@@ -2,7 +2,7 @@
 var useDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
 
 tinymce.init({
-  selector: 'textarea',
+  selector: '#textarea-full',
   promotion: false,
   plugins: 'print paste importcss searchreplace autolink autosave directionality code visualblocks visualchars fullscreen image link codesample table charmap hr nonbreaking insertdatetime advlist lists wordcount textpattern noneditable help charmap quickbars emoticons media',
   menubar: 'file edit view insert format tools table help',

@@ -7,7 +7,6 @@ Month
 {% block head %}
 
     {% load static %}
-    {% load time_filters %}
     {{ task_full_form.media }}
     <script src="{% static 'tinymce/tinymce.min.js' %}"></script>
     <script type="text/javascript" src="{% static 'tinymce/custom.js' %}" ></script>
@@ -18,6 +17,58 @@ Month
 {% load crispy_forms_tags %} 
 
 {% block body %}
+<script>
+ 
+ // from: https://stackoverflow.com/questions/563406/how-to-add-days-to-date
+ 
+ /*
+    Date.prototype.addDays = function(days) {
+        var date = new Date(this.valueOf());
+        date.setDate(date.getDate() + days);
+        return date;
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Get the first day
+        first_day = document.getElementsByClassName('calendar-data')[0].id
+        //alert(first_day)
+
+        // Convert it to date obj
+        date = new Date(first_day)
+
+        for (let i=1; i<=42; i++) {
+            // initialize popovers with id popover-YYYY-M-D when the user hovers over the add button
+            let pop_id = "popover-" + date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate()
+            let content_id = "#popover-content-" + date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate()
+            let head_id = "#popover-head-" + date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate()
+
+            date = date.addDays(1)
+
+            document.getElementById(pop_id).addEventListener("mouseover", function() {
+                $("#" + pop_id).popover({ 
+                    html : true,
+                    sanitize: false,
+                    container: 'body',
+                    offset: 200,
+
+                    title: function() {
+                        return $(head_id).html();
+                    },
+
+                    content: function() {
+                        return $(content_id).html();
+                    }
+
+                });
+                
+            });
+
+        }
+
+    });
+
+*/
+</script>
 
 {% if messages %}
     <div class="px-3">
@@ -105,23 +156,18 @@ Month
                             </tr>
                             {% for week in month_dict %}
                                 <tr>
-                                {% for day, task_list in week.items %}
+                                {% for day in week %}
                                     <td class="calendar-data" id="{{ day|date:pop_format }}">
                                         <div class="square">
                                             <div class="row mx-1">
                                                 <div class="signika color_bl">
-                                                    <a href="{% url 'agenda' %}"  id="task_name" class="ellip signika color_bl">{{ day|date:format }}</a>
+                                                    {{ day|date:format }}
                                                 </div>
                                             </div>
                                             
                                             {% for task in task_list %}
-                                                <div class="row mx-1 ellip">
-                                                    {% if task.no_dis_tsk|is_int%}
-                                                        <div class="signika color_bl">
-                                                            {{ task.no_dis_tsk }} more
-                                                        </div>
-                                                    {% else %}
-                                                        {% if task.assigned_date|date:format == day|date:format %}
+                                                {% if task.assigned_date|date:format == day|date:format %}
+                                                    <div class="row mx-1 ellip">
                                                         <form method="POST">
                                                             {% csrf_token %}
                                                             <input type="hidden" name="task_id" value="{{ task.id }}">
@@ -138,15 +184,13 @@ Month
                                                                 </svg>
                                                             </button>
                                                         {% endif %}
-
-                                                        <span class="signika color_bl">
-                                                            <a href="{% url 'taskinfo' task.id %}"  id="task_name" class="ellip signika color_bl">{{ task.task_name }}</a>
-                                                        </span>
-
+                                                            <span class="signika color_bl">
+                                                                <a href="{% url 'taskinfo' task.id %}"  id="task_name" class="ellip signika color_bl">{{ task.task_name }}</a>
+                                                            </span>
+                                                            
                                                         </form>
-                                                        {% endif %}
-                                                    {% endif %}
-                                                </div>
+                                                    </div>
+                                                {% endif %}
                                             {% endfor %}
                                             <div class="row mx-1">
                                                 <!-- Button trigger modal -->

@@ -113,6 +113,7 @@ def logout_view(request):
 def month_calendar(request, year, month, day):
     month_dict = []
     form = agenda_form()
+    task_form = task_full_form()
 
     note = month_note.objects.filter(user_id=request.user.id)
     if not note:
@@ -166,28 +167,47 @@ def month_calendar(request, year, month, day):
                 messages.success(request, 'Your notes were saved!')
             else:
                 messages.error(request, "Could not save. Invalid information.")
+        elif request.POST.get('create_task'):
+            task_form = task_full_form(request.POST)
+
+            if task_form.is_valid():
+                add_date = request.POST.get('create_task')
+
+                # add_date has the following format before converting: "Oct. 16, 2022"
+                # convert add_date to datetime
+                format = "%Y-%m-%d" # Y-n-j
+                add_date = datetime.strptime(add_date, format)
+
+                if create_task(request, add_date) == 0:
+                    messages.success(request, "The task was created")
+                else:
+                    messages.error(request, "Could not create task")
+            else:
+                messages.error(request, "Could not create task. Invalid form.")
+
 
     if not month_dict:
         # find the date and calculate the month's grid
         now = datetime(year, month, day)
-        month_dict = calc_month(now)
+        month_dict = calc_month(request, now)
 
     # find the next and previous month
     pre = now.replace(day=1) - timedelta(days=1)
+    now = datetime(year, month, day)
     pos = now.replace(day=28) + timedelta(days=4) 
 
-    # get the tasks for each day of the month.
-    task_list = tasks.objects.filter(user_id__id=request.user.id, assigned_date__range=(now.replace(day=1), last_day_of_month(now))).values('id','task_name', 'label', 'comple_sta', 'tracking_sta', 'assigned_date')
+    pop_format="Y-m-d"
 
     return render(request=request, template_name="apptime/month_calendar.html", context={
         'form':form,
         'editor_form':editor_form,
         'month_dict':month_dict, 
         'format':DATEFORMATNOD,
+        'pop_format':pop_format,
         'apptime_today':APPTIME_TODAY,
         'pre_month':pre,
         'pos_month':pos,
-        'task_list':task_list
+        'task_full_form':task_form
         })
 
 
@@ -258,7 +278,7 @@ def create_task(request, date):
     if not assigned:
         assigned = date
 
-    description = request.POST["description"]
+    description = request.POST.get('description', 'None')
 
     # get user's object
     userobj = User.objects.get(id=request.user.id)
@@ -371,8 +391,6 @@ def agenda(request):
                 user_id = request.user.id
                 label = None
                 start_time = timezone.now()
-
-                print(start_time)
 
                 name = tasks.objects.raw('''SELECT apptime_tasks.id, apptime_tasks.task_name
                                                 FROM apptime_tasks
@@ -498,7 +516,6 @@ def time_tracking(request):
         elif request.POST.get('track_filter') == 't': # this is to filter task history
             if form.is_valid():
                 time = form.cleaned_data.get("time")
-                print("TIME: ", time)
                 task_name = request.POST["task"]
                 label = request.POST["label"]
                 assigned_date = form.cleaned_data.get("assigned")
@@ -533,7 +550,6 @@ def time_tracking(request):
                 DICFILTER = elements
 
                 total = elements.aggregate(Sum("total_time"))
-                print("total: ", total)
 
                 return render(request, "apptime/time_tracking.html", context={
                     "elements":elements, 
@@ -910,7 +926,7 @@ def last_day_of_month(now):
     return last_day
 
 # returns a lists of lists that will be displayed in the month page. It requires a datetime object to calculate the 7 by 6 grid for the month.
-def calc_month(now):
+def calc_month(request, now):
     # Find the date that would be first displayed in my 7x6 grid
     # find the sunday of the now week
     weekday = now.weekday()
@@ -926,12 +942,31 @@ def calc_month(now):
 
     # create a dict with the 42 corresponding dates.
     month_dict = []
-    week_dict = []
-    
+    week_dict = {}
+    task_list = tasks.objects.filter(user_id__id=request.user.id, assigned_date__range=(now, now + timedelta(days=42))).values('id','task_name', 'label', 'comple_sta', 'tracking_sta', 'assigned_date').order_by('assigned_date')
+
+    # row number
     for i in range(6):
-        week_dict = []
+        week_dict = {}
+        # column number
         for j in range(7):
-            week_dict.append(now)
+            week_dict[now] = []
+            # Append the tasks of the day to the week day
+            for task in task_list:
+                if task['assigned_date'] == now.date():
+                    week_dict[now].append(task)
+
+            # pop all the elements other than the first three
+            no_displ_tsk = 0
+            while len(week_dict[now]) > 3:
+                week_dict[now].pop(len(week_dict[now])-1)
+                no_displ_tsk = no_displ_tsk + 1
+            # append the number of poped elements
+            if no_displ_tsk == 0:
+                no_displ_tsk = None
+            no_displ_tsk_dict = {"no_dis_tsk": no_displ_tsk}
+            week_dict[now].append(no_displ_tsk_dict)
+
             now = now + timedelta(days=1)
         month_dict.append(week_dict)
 
