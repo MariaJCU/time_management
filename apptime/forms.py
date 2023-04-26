@@ -78,7 +78,7 @@ class task_full_form(forms.Form):
 	task = forms.CharField(label='', max_length=100, required=False)
 	label = forms.CharField(label='', max_length=100, required=False)
 	assigned = forms.DateTimeField(label='Due', input_formats=['%Y-%m-%d'], widget=dateinput, required=False)
-	description = forms.CharField(widget=TinyMCE(attrs={'id':'textarea-pop', 'height':100}), required=False)
+	description = forms.CharField(widget=TinyMCE(attrs={'id':'textarea-full', 'height':100}), required=False)
 
 
 class time_filter_form(forms.Form):
@@ -94,7 +94,7 @@ class time_filter_form(forms.Form):
 			'autocomplete':"off"
         }))
 	assigned = forms.DateTimeField(label='Due Date', input_formats=['%Y-%m-%d'], required=False, widget=dateinput)
-	created = forms.DateTimeField(label='Creation', input_formats=['%Y-%m-%d %H:%M'], widget=datetimeinput, required=False)
+	created = forms.DateTimeField(label='Creation', input_formats=['%Y-%m-%d'], widget=dateinput, required=False)
 	start = forms.DateTimeField(label='', input_formats=['%Y-%m-%d %H:%M'], widget=datetimeinput, required=False)
 	final = forms.DateTimeField(label='', input_formats=['%Y-%m-%d %H:%M'], widget=datetimeinput, required=False)
 	completed = forms.ChoiceField(label='Completed?', widget=forms.RadioSelect, choices=completedchoices, required=False)

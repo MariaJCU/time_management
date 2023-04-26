@@ -69,6 +69,7 @@ Agenda
     </div>
 {% endif %}
 
+<!--
 <div class="clear left_div">
     <form method="POST">
         {% csrf_token %}
@@ -103,6 +104,37 @@ Agenda
             </svg>
         </button>
     </form>
+</div>
+
+-->
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Controls and buttons -->
+        <form method="POST" class="form-inline">
+            <div class="mx-sm-3 mb-2">
+                {% csrf_token %}
+                {{ agenda_form|crispy}}
+                <input type="hidden" name="date_entered" id="date_entered" value="t" readonly>
+            </div>
+            
+            <button type="submit" class="btn btn-primary mb-2">
+                Go
+            </button>  
+        </form>
+        <div class="btn-group mx-sm-3 mb-2" role="group">
+            <a type="button" class="btn btn-primary" href="{% url 'agenda' pre.year pre.month pre.day %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-left" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+            </a>
+            <a type="button" class="btn btn-primary" href="{% url 'agenda' pos.year pos.month pos.day %}">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-chevron-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </a>
+        </div>
+    </div>
 </div>
 
 <div class="grid clear">
@@ -142,7 +174,7 @@ Agenda
                                 {% endif %}
                             </td>
                             <td class="roundrows">
-                                <a href="{% url 'taskinfo' task.id %}"  id="task_name" class="task_name">{{ task.task }}</a>
+                                <a href="{% url 'taskinfo' date.year date.month date.day task.id %}"  id="task_name" class="task_name">{{ task.task }}</a>
                                 <div id="label" class="label">{{ task.label }}</div>
                             </td>
                             <td class="roundrows">
@@ -203,9 +235,8 @@ Agenda
                                 <form method="POST">
                                     {% csrf_token %}
 
-                                    <input type="hidden" name="add_date" id="add_date" value="{{ date }}" readonly>
+                                    <input type="hidden" name="add_date" id="add_date" value="{{ date|date:format_plus }}" readonly>
                                     {% for field in task_full_form %}
-
                                         {% if field.name == 'label' %}
                                             <label>Label</label>
                                             {{ field|as_crispy_field }}
@@ -231,3 +262,4 @@ Agenda
 </div>
 
 {% endblock %}
+

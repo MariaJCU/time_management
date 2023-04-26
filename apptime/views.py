@@ -60,7 +60,9 @@ def index(request):
 
         request.session['django_timezone'] = zone_query.timezone
 
-        return HttpResponseRedirect("agenda")
+        string = "agenda/" + str(APPTIME_TODAY.year) + "/" + str(APPTIME_TODAY.month) + "/" + str(APPTIME_TODAY.day)
+
+        return HttpResponseRedirect(string)
     else:
         return HttpResponseRedirect("login_pg")
 
@@ -114,8 +116,8 @@ def month_calendar(request, year, month, day):
     month_dict = []
     form = agenda_form()
     task_form = task_full_form()
-
     note = month_note.objects.filter(user_id=request.user.id)
+
     if not note:
         # get user's object
         userobj = User.objects.get(id=request.user.id)
@@ -184,7 +186,6 @@ def month_calendar(request, year, month, day):
                     messages.error(request, "Could not create task")
             else:
                 messages.error(request, "Could not create task. Invalid form.")
-
 
     if not month_dict:
         # find the date and calculate the month's grid
@@ -291,8 +292,11 @@ def create_task(request, date):
 
 
 @login_required(login_url='login_pg')
-def agenda(request):
+def agenda(request,year, month, day):
     task_form = task_full_form()
+    form = agenda_form()
+
+    now = None
     if request.method == "POST":
             if request.POST.get('agendaback') == 't':
                 now = request.POST["sunday"]
@@ -336,22 +340,8 @@ def agenda(request):
 
             elif request.POST.get('date_entered') == 't':
                 form = agenda_form(request.POST)
-                now = request.POST["agendadate"]
-                now = datetime.strptime(now, '%Y-%m-%d')
-                day = now.weekday()
-
-                # find last Sunday
-                while not (day == 6):
-                    now = now - timedelta(days=1)
-                    day = now.weekday()
-
-                # create dic with the dates of the week
-                datesdic = calc_week(now, None)
-
-                # Get the tasks for the week
-                tasklist = find_tasks_for_week(request.user.id, datesdic, None)
-
-                return render(request, "apptime/agenda.html", context={'apptime_today':APPTIME_TODAY, "datesdic":datesdic, "tasklist":tasklist, "agenda_form":form, "task_full_form":task_form, 'format':DATEFORMAT})
+                if form.is_valid():
+                    now = form.cleaned_data.get("agendadate")
 
             elif request.POST.get('add_date'):
                 task_form = task_full_form(request.POST)
@@ -361,7 +351,8 @@ def agenda(request):
 
                     # add_date has the following format before converting: "Oct. 16, 2022"
                     # convert add_date to datetime
-                    format = "%b. %d, %Y" 
+                    #format = "%b. %d, %Y" 
+                    format = "%Y-%m-%d"
                     add_date = datetime.strptime(add_date, format)
 
                     if create_task(request, add_date) == 0:
@@ -421,16 +412,17 @@ def agenda(request):
                                         SET comple_sta = 'f'
                                         WHERE apptime_tasks.user_id_id = %s AND apptime_tasks.id = %s
                                         """, (user_id, task_id))
-            
 
-    now = datetime.now()
-    day = now.weekday()
-    form = agenda_form()
+    # find the date and calculate the week's grid
+    if not now:
+        now = datetime(year, month, day)
+    original = now
 
+    weekday = now.weekday()
     # find last Sunday
-    while not (day == 6):
+    while not (weekday == 6):
         now = now - timedelta(days=1)
-        day = now.weekday()
+        weekday = now.weekday()
 
     # create dic with the dates of the week
     datesdic = calc_week(now, None)
@@ -438,13 +430,22 @@ def agenda(request):
     # Get the tasks for the week
     tasklist = find_tasks_for_week(request.user.id, datesdic, None)
 
+    # find the next and previous week
+    now = original
+    pre = now - timedelta(days=7)
+    now = original
+    pos = now + timedelta(days=7) 
+
     return render(request, "apptime/agenda.html", context={
         "datesdic":datesdic, 
         "tasklist":tasklist, 
         "agenda_form":form,
         "task_full_form":task_form,
         'format':DATEFORMAT,
+        'format_plus': "Y-m-d",
         'apptime_today':APPTIME_TODAY,
+        'pre':pre,
+        'pos':pos,
         })
 
 
@@ -518,8 +519,13 @@ def time_tracking(request):
                 time = form.cleaned_data.get("time")
                 task_name = request.POST["task"]
                 label = request.POST["label"]
+                
                 assigned_date = form.cleaned_data.get("assigned")
+                print("ASSIGNED DATE: ", assigned_date)
+
                 creation_date = form.cleaned_data.get("created")
+                print("CREATION DATE: ", creation_date)
+
                 completed = form.cleaned_data.get("completed")
                 start = form.cleaned_data.get("start")
                 final = form.cleaned_data.get("final")
@@ -533,6 +539,8 @@ def time_tracking(request):
                     if value:
                         if key in ['finish_time__lte','start_time__gte','task_id__creation_date__contains']:
                             filter_kwargs[key] = str(value.astimezone(pytz.timezone('UTC')).strftime(format))
+                        if key in ['task_id__assigned_date__icontains', 'task_id__creation_date__icontains']:
+                            filter_kwargs[key] = str(value.strftime('%Y-%m-%d'))
                         else:
                             filter_kwargs[key] = value
                 
@@ -549,17 +557,21 @@ def time_tracking(request):
                 elements = work_periods.objects.select_related('task_id').filter(**filter_kwargs).order_by('-start_time').values('id', 'task_id__task_name', 'task_id__label', 'start_time', 'finish_time', 'total_time', 'task_id__tracking_sta')
                 DICFILTER = elements
 
+                print("QUERY: ", elements.query)
+
                 total = elements.aggregate(Sum("total_time"))
 
                 return render(request, "apptime/time_tracking.html", context={
                     "elements":elements, 
                     "time_filter_form":form, 
+                    "log_form": log_form,
+                    "start_form": start_form,
                     "file_form":formfile, 
                     'format':DATETIMEFORMAT,
                     'total':total['total_time__sum'],
                     'apptime_today':APPTIME_TODAY,
                     })
-                
+            
             else:
                 messages.error(request, "Could not filter time history. Invalid form.")
 
@@ -585,7 +597,9 @@ def time_tracking(request):
 
             return render(request=request, template_name="apptime/time_tracking.html", context={
                 "elements":DICFILTER, 
-                "time_filter_form":form, 
+                "time_filter_form":form,
+                "log_form": log_form,
+                "start_form": start_form, 
                 "file_form":formfile, 
                 "order":order, 
                 "format":DATETIMEFORMAT,
@@ -823,7 +837,7 @@ def log_time(request, log_form):
 
 
 @login_required(login_url='login_pg')
-def edit_task(request, task_id):
+def edit_task(request, year, month, day, task_id):
     if request.method == "POST":
         # Get form
         form = task_full_form(request.POST)
@@ -843,7 +857,7 @@ def edit_task(request, task_id):
             # Update task
             tasks.objects.filter(id=task_id, user_id=request.user).update(**filter_kwargs)
             messages.success(request, "The task was updated")
-            return HttpResponseRedirect(reverse('taskinfo', args=[task_id]))
+            return HttpResponseRedirect(reverse('taskinfo', args=[year, month, day, task_id]))
 
         messages.error(request, "Could not update task")
         return HttpResponseRedirect(request.path)
@@ -874,15 +888,14 @@ def edit_task(request, task_id):
 
 
 @login_required(login_url='login_pg')
-def taskinfo(request, task_id):
+def taskinfo(request, year, month, day, task_id):
     if request.method == "POST":
         if request.POST.get('delete') == 't':
             # delete task
             task = tasks.objects.get(id=task_id)
             task.delete()
 
-            # redirect to agenda page
-            return HttpResponseRedirect("agenda")
+            return HttpResponseRedirect(reverse('agenda', args=[year, month, day]))
 
     # Get task object
     task = tasks.objects.get(id=task_id, user_id=request.user)
@@ -911,7 +924,10 @@ def taskinfo(request, task_id):
         "elements": elements,
         "dateformat":DATEFORMATNOD,
         "datetimeformat":DATETIMEFORMAT,
-        'apptime_today':APPTIME_TODAY,
+        "apptime_today":APPTIME_TODAY,
+        "year":year,
+        "month":month,
+        "day":day
     })
 
 """
@@ -925,10 +941,20 @@ def last_day_of_month(now):
 
     return last_day
 
-# returns a lists of lists that will be displayed in the month page. It requires a datetime object to calculate the 7 by 6 grid for the month.
+
+# returns a lists of dictionaries that will be displayed in the month page. It requires a datetime object to calculate the 7 by 6 grid for the month.
+# formart of output dict: 
+# [ 
+    # {‘date0.0’ : [ {task obj}, … {task obj} ], … ‘date0.6’ : [ {task obj}, … {task obj} ]  }, 
+    # {‘date1.0’ : [ {task obj}, … {task obj} ], … ‘date1.6’ : [ {task obj}, … {task obj} ]  },
+    # …
+    # {‘date5.0’ : [ {task obj}, … {task obj} ], … ‘date5.6’ : [ {task obj}, … {task obj} ]  },
+# ]
 def calc_month(request, now):
     # Find the date that would be first displayed in my 7x6 grid
     # find the sunday of the now week
+    original = now
+
     weekday = now.weekday()
     while not (weekday == 6):
         now = now - timedelta(days=1)
@@ -936,9 +962,10 @@ def calc_month(request, now):
 
     sunday = now
 
-    # subtract 7 days from now until the month is different
-    while (now.month == sunday.month):
-        now = now - timedelta(days=7)
+    # subtract 7 days from now until the month is different only if the month are not already different.
+    if sunday.month == original.month:
+        while (now.month == sunday.month):
+            now = now - timedelta(days=7)
 
     # create a dict with the 42 corresponding dates.
     month_dict = []
@@ -973,6 +1000,7 @@ def calc_month(request, now):
     # Return the dict with the dates 
     return month_dict
 
+
 # returns a dictionary with keys (sunday to saturday) and its dates as strings given the date of sunday (in datetime type) and a string format (ex: "%Y-%m-%d").
 def calc_week(now, format):
     # Create a dictionary with the dates that need to be displayed starting from Sunday
@@ -988,7 +1016,7 @@ def calc_week(now, format):
     return datesdic
 
 
-# returns a raw() dictionary with the assigned dates converted to the specified format. Datesdic as returned by calc_week()
+# returns a dictionary with the assigned dates converted to the specified format. Datesdic as returned by calc_week()
 def find_tasks_for_week(user_id, datesdic, format):
 
     tasklist = tasks.objects.filter(user_id=user_id, assigned_date__in=list(datesdic.values())).annotate(task=F('task_name'), assigned=F('assigned_date'), tracking=F('tracking_sta'), complete=F('comple_sta'))

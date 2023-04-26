@@ -89,7 +89,7 @@ Task info
         </div>
         
         <div>
-            <a class="buttonsubmit float_left" href="{% url 'agenda' %}" role="button">Back</a>
+            <input class="buttonsubmit float_left" type="button" value="Back" onClick="javascript:history.go(-1);">
 
             <form method="POST" class="float_right">
                 {% csrf_token %}
@@ -102,7 +102,7 @@ Task info
                 </button>
             </form>
 
-            <a class="buttonsubmit float_right" href="{% url 'edit_task' task.id %}" role="button">
+            <a class="buttonsubmit float_right" href="{% url 'edit_task' year month day task.id %}" role="button">
                 <i class="bi bi-pencil-square"></i> Edit
             </a>
         </div>
@@ -175,7 +175,7 @@ Task info
             {% endfor %}
         
         <div>
-            <a class="buttonsubmit float_left" href="{% url 'agenda' %}" role="button">Back</a>
+            <input class="buttonsubmit float_left" type="button" value="Back" onClick="javascript:history.go(-1);">
 
             <button class="buttonsubmit float_right" type="submit">
                 <i class="bi bi-pencil-square"></i> Save

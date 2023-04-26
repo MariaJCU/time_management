@@ -110,7 +110,7 @@ Month
                                         <div class="square">
                                             <div class="row mx-1">
                                                 <div class="signika color_bl">
-                                                    <a href="{% url 'agenda' %}"  id="task_name" class="ellip signika color_bl">{{ day|date:format }}</a>
+                                                    <a href="{% url 'agenda' apptime_today.year apptime_today.month apptime_today.day %}"  id="task_name" class="ellip signika color_bl">{{ day|date:format }}</a>
                                                 </div>
                                             </div>
                                             
@@ -140,7 +140,7 @@ Month
                                                         {% endif %}
 
                                                         <span class="signika color_bl">
-                                                            <a href="{% url 'taskinfo' task.id %}"  id="task_name" class="ellip signika color_bl">{{ task.task_name }}</a>
+                                                            <a href="{% url 'taskinfo' day.year day.month day.day task.id %}"  id="task_name" class="ellip signika color_bl">{{ task.task_name }}</a>
                                                         </span>
 
                                                         </form>

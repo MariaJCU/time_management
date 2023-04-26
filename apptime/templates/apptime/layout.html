@@ -50,7 +50,7 @@
                     {% if request.user.is_authenticated %}
                         <ul class="navbar-nav">
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'agenda' %}">Agenda</a>
+                                <a class="nav-link" href="{% url 'agenda' apptime_today.year apptime_today.month apptime_today.day %}">Agenda</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'month_calendar' apptime_today.year apptime_today.month apptime_today.day %}">Month Calendar</a>
